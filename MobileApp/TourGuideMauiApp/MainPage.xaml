@@ -1,0 +1,38 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="TourGuideMauiApp.MainPage"
+             Title="Thuyết Minh Du Lịch">
+
+    <Grid RowDefinitions="*, Auto, Auto">
+        <VerticalStackLayout Grid.Row="0" VerticalOptions="Center" Spacing="15">
+            <Label x:Name="LblStatus" 
+                   Text="Đang xác định vị trí của bạn..." 
+                   FontSize="18" HorizontalOptions="Center" TextColor="Gray"/>
+
+            <Label x:Name="LblLocation" 
+                   Text="Tọa độ: --, --" 
+                   FontSize="14" HorizontalOptions="Center" />
+        </VerticalStackLayout>
+
+        <VerticalStackLayout Grid.Row="1" Padding="20" Spacing="10">
+            <Button x:Name="BtnCheckIn"
+                    Text="KIỂM TRA ĐIỂM ĐẾN GẦN NHẤT"
+                    Clicked="OnCheckInClicked"
+                    BackgroundColor="#2196F3" />
+
+            <Button x:Name="BtnScanQR"
+                    Text="QUÉT MÃ QR (NGHE NGAY)"
+                    Clicked="OnScanQRClicked"
+                    BackgroundColor="#4CAF50" />
+        </VerticalStackLayout>
+
+        <Frame Grid.Row="2" Margin="10" BackgroundColor="#F5F5F5" CornerRadius="10">
+            <HorizontalStackLayout Spacing="20" HorizontalOptions="Center">
+                <Button Text="Play" />
+                <Button Text="Pause" />
+                <Label Text="Đang nghe: Giới thiệu món Phở (VN)" VerticalOptions="Center"/>
+            </HorizontalStackLayout>
+        </Frame>
+    </Grid>
+</ContentPage>
