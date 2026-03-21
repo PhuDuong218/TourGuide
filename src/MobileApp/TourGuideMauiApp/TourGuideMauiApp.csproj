@@ -23,7 +23,6 @@
 		<!-- Display name -->
 		<ApplicationTitle>TourGuideMauiApp</ApplicationTitle>
 
-		<!-- App Identifier -->
 		<ApplicationId>com.companyname.tourguidemauiapp</ApplicationId>
 
 		<!-- Versions -->
