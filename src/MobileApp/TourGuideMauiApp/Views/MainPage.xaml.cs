@@ -1,7 +1,7 @@
 ﻿using Microsoft.Maui.Devices.Sensors;
 using System.Globalization;
 
-namespace TourGuideMauiApp;
+namespace TourGuideMauiApp.Views;
 
 public partial class MainPage : ContentPage
 {
