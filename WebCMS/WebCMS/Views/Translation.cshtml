@@ -1,0 +1,24 @@
+﻿@model List<WebCMS.Models.POITranslation>
+
+<h2>Translations</h2>
+
+<a href="/POI/AddTranslation?poiId=@ViewBag.POIID">+ Thêm</a>
+
+<table class="table">
+    <tr>
+        <th>Lang</th>
+        <th>Name</th>
+        <th>Action</th>
+    </tr>
+
+    @foreach (var t in Model)
+    {
+        <tr>
+            <td>@t.LanguageCode</td>
+            <td>@t.DisplayName</td>
+            <td>
+                <a href="/POI/DeleteTranslation?poiId=@t.POIID&lang=@t.LanguageCode">Xóa</a>
+            </td>
+        </tr>
+    }
+</table>

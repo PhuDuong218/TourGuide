@@ -1,0 +1,31 @@
+﻿@model List<WebCMS.Models.POIDTO>
+
+<h2>Danh sách POI</h2>
+<a href="/POI/Create" class="btn btn-primary">+ Thêm POI</a>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Tên</th>
+            <th>Lat</th>
+            <th>Lng</th>
+            <th>Action</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var p in Model)
+        {
+            <tr>
+                <td>@p.POIID</td>
+                <td>@p.Name</td>
+                <td>@p.Latitude</td>
+                <td>@p.Longitude</td>
+                <td>
+                    <a href="/POI/Translations/@p.POIID">Nội dung</a> |
+                    <a href="/POI/Delete/@p.POIID">Xóa</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
