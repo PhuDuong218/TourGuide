@@ -1,0 +1,6 @@
+@TourGuideServer_HostAddress = http://192.168.1.252:5015
+
+GET {{TourGuideServer_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
