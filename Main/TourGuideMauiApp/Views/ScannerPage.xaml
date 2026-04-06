@@ -1,0 +1,82 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:zxing="clr-namespace:ZXing.Net.Maui.Controls;assembly=ZXing.Net.MAUI.Controls"
+    x:Class="TourGuideMauiApp.Views.ScannerPage"
+    Title="Quét mã QR">
+
+    <Grid>
+
+        <!-- Camera toàn màn hình -->
+        <zxing:CameraBarcodeReaderView
+            x:Name="barcodeReader"
+            BarcodesDetected="OnBarcodesDetected"/>
+
+        <!-- Overlay tối 2 bên, chừa vùng quét giữa -->
+        <Grid RowDefinitions="*,260,*" ColumnDefinitions="*,260,*">
+            <BoxView Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="3" BackgroundColor="#99000000"/>
+            <BoxView Grid.Row="1" Grid.Column="0"                      BackgroundColor="#99000000"/>
+            <BoxView Grid.Row="1" Grid.Column="2"                      BackgroundColor="#99000000"/>
+            <BoxView Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="3" BackgroundColor="#99000000"/>
+
+            <!-- Khung 4 góc trắng -->
+            <Grid Grid.Row="1" Grid.Column="1">
+                <BoxView WidthRequest="30" HeightRequest="4"  BackgroundColor="White" HorizontalOptions="Start" VerticalOptions="Start"/>
+                <BoxView WidthRequest="4"  HeightRequest="30" BackgroundColor="White" HorizontalOptions="Start" VerticalOptions="Start"/>
+                <BoxView WidthRequest="30" HeightRequest="4"  BackgroundColor="White" HorizontalOptions="End"   VerticalOptions="Start"/>
+                <BoxView WidthRequest="4"  HeightRequest="30" BackgroundColor="White" HorizontalOptions="End"   VerticalOptions="Start"/>
+                <BoxView WidthRequest="30" HeightRequest="4"  BackgroundColor="White" HorizontalOptions="Start" VerticalOptions="End"/>
+                <BoxView WidthRequest="4"  HeightRequest="30" BackgroundColor="White" HorizontalOptions="Start" VerticalOptions="End"/>
+                <BoxView WidthRequest="30" HeightRequest="4"  BackgroundColor="White" HorizontalOptions="End"   VerticalOptions="End"/>
+                <BoxView WidthRequest="4"  HeightRequest="30" BackgroundColor="White" HorizontalOptions="End"   VerticalOptions="End"/>
+
+                <!-- Thanh quét animation -->
+                <BoxView x:Name="scanLine"
+                         HeightRequest="2"
+                         BackgroundColor="#6200EE"
+                         VerticalOptions="Start"
+                         Margin="4,0"/>
+            </Grid>
+        </Grid>
+
+        <!-- Hướng dẫn phía trên -->
+        <Label Text="Đưa mã QR vào khung hình để nghe thuyết minh"
+               VerticalOptions="Start" HorizontalOptions="Center"
+               TextColor="White" FontSize="14"
+               Margin="20,60,20,0" HorizontalTextAlignment="Center"/>
+
+        <!-- Card kết quả — dùng Border thay Frame (.NET 9) -->
+        <Border x:Name="resultFrame"
+                IsVisible="False"
+                VerticalOptions="End"
+                Margin="20,0,20,40"
+                BackgroundColor="White"
+                StrokeShape="RoundRectangle 16"
+                Padding="20,16">
+            <VerticalStackLayout Spacing="8">
+                <Label x:Name="resultTitle"
+                       FontAttributes="Bold" FontSize="16" TextColor="#1A1A2E"/>
+                <Label x:Name="resultDescription"
+                       FontSize="13" TextColor="#555"
+                       MaxLines="3" LineBreakMode="TailTruncation"/>
+                <Button x:Name="btnSpeak"
+                        Text="🔊 Nghe thuyết minh"
+                        Clicked="OnSpeakClicked"
+                        BackgroundColor="#6200EE"
+                        TextColor="White"
+                        CornerRadius="10"
+                        Margin="0,4,0,0"/>
+            </VerticalStackLayout>
+        </Border>
+
+        <!-- Loading spinner -->
+        <ActivityIndicator x:Name="scanLoading"
+                           IsRunning="False" IsVisible="False"
+                           Color="White"
+                           WidthRequest="40" HeightRequest="40"
+                           VerticalOptions="End" HorizontalOptions="Center"
+                           Margin="0,0,0,60"/>
+
+    </Grid>
+</ContentPage>

@@ -1,0 +1,192 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:mapsui="clr-namespace:Mapsui.UI.Maui;assembly=Mapsui.UI.Maui"
+    x:Class="TourGuideMauiApp.Views.MapPage"
+    Title="Bản đồ du lịch">
+
+    <Grid>
+
+        <!-- ── Bản đồ nền ── -->
+        <mapsui:MapControl x:Name="mapView"/>
+
+        <!-- ── Nút góc trên phải ── -->
+        <VerticalStackLayout
+            VerticalOptions="Start"
+            HorizontalOptions="End"
+            Margin="10,48,10,0"
+            Spacing="8">
+
+            <Button Text="📍 Tải địa điểm"
+                    Clicked="OnRefreshMapClicked"
+                    BackgroundColor="#6200EE"
+                    TextColor="White"
+                    CornerRadius="20"
+                    Padding="14,8"
+                    FontSize="13"/>
+
+            <Button Text="🎯 Vị trí của tôi"
+                    Clicked="OnMyLocationClicked"
+                    BackgroundColor="#03A9F4"
+                    TextColor="White"
+                    CornerRadius="20"
+                    Padding="14,8"
+                    FontSize="13"/>
+        </VerticalStackLayout>
+
+        <!-- ── Loading overlay ── -->
+        <Border x:Name="loadingOverlay"
+                IsVisible="False"
+                BackgroundColor="#CC000000"
+                StrokeShape="RoundRectangle 12"
+                Padding="28,18"
+                HorizontalOptions="Center"
+                VerticalOptions="Center">
+            <VerticalStackLayout Spacing="10" HorizontalOptions="Center">
+                <ActivityIndicator x:Name="loadingIndicator"
+                                   IsRunning="False"
+                                   Color="White"
+                                   WidthRequest="36"
+                                   HeightRequest="36"/>
+                <Label x:Name="loadingLabel"
+                       Text="Đang tải..."
+                       TextColor="White"
+                       FontSize="14"
+                       HorizontalOptions="Center"/>
+            </VerticalStackLayout>
+        </Border>
+
+        <!-- ══ Bottom Sheet — hiện khi tap POI ══ -->
+        <Border x:Name="poiBottomSheet"
+                IsVisible="False"
+                VerticalOptions="End"
+                BackgroundColor="White"
+                StrokeShape="RoundRectangle 20,20,0,0"
+                StrokeThickness="0"
+                Padding="0,0,0,28">
+            <Border.Shadow>
+                <Shadow Brush="Black" Offset="0,-4" Radius="16" Opacity="0.2"/>
+            </Border.Shadow>
+
+            <Grid RowDefinitions="Auto,Auto,Auto,Auto">
+
+                <!-- Drag handle -->
+                <BoxView Grid.Row="0"
+                         WidthRequest="40" HeightRequest="4"
+                         BackgroundColor="#DDDDDD" CornerRadius="2"
+                         HorizontalOptions="Center" Margin="0,10,0,0"/>
+
+                <!-- Ảnh POI -->
+                <Border Grid.Row="1"
+                        Margin="16,14,16,0"
+                        HeightRequest="175"
+                        StrokeShape="RoundRectangle 14"
+                        StrokeThickness="0"
+                        BackgroundColor="#F0EEFF">
+                    <Grid
+                        IsClippedToBounds="True">
+                        <Label x:Name="imgPlaceholder"
+                               Text="🏛" FontSize="52"
+                               HorizontalOptions="Center"
+                               VerticalOptions="Center"/>
+                        <Image x:Name="poiImage"
+                               Aspect="AspectFill"
+                               IsVisible="False"/>
+                    </Grid>
+                </Border>
+
+                <!-- Tên + Địa chỉ + Mô tả -->
+                <VerticalStackLayout Grid.Row="2"
+                                     Margin="16,12,16,0" Spacing="3">
+                    <Label x:Name="poiName"
+                           FontSize="18" FontAttributes="Bold"
+                           TextColor="#1A1A2E"
+                           LineBreakMode="TailTruncation"/>
+                    <Label x:Name="poiAddress"
+                           FontSize="12" TextColor="#888"
+                           IsVisible="False"
+                           LineBreakMode="TailTruncation"/>
+                    <Label x:Name="poiDescription"
+                           FontSize="13" TextColor="#555"
+                           MaxLines="3"
+                           LineBreakMode="TailTruncation"
+                           Margin="0,4,0,0"/>
+                </VerticalStackLayout>
+
+                <!-- Audio controls: ⏪  ▶/⏸  ⏩  |  Đóng -->
+                <Grid Grid.Row="3"
+                      Margin="16,18,16,0"
+                      ColumnDefinitions="*,52,16,60,16,52,*,Auto"
+                      VerticalOptions="Center">
+
+                    <!-- ⏪ Tua lùi -->
+                    <Border Grid.Column="1"
+                            BackgroundColor="#EDE7F6"
+                            StrokeShape="RoundRectangle 26"
+                            StrokeThickness="0"
+                            WidthRequest="52" HeightRequest="52"
+                            HorizontalOptions="Center"> 
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Tapped="OnSeekBackward"/>
+                        </Border.GestureRecognizers>
+                        <VerticalStackLayout HorizontalOptions="Center"
+                                             VerticalOptions="Center" Spacing="0">
+                            <Label Text="⏪" FontSize="20" HorizontalOptions="Center"/>
+                            <Label Text="-10s" FontSize="9" TextColor="#6200EE"
+                                   HorizontalOptions="Center"/>
+                        </VerticalStackLayout>
+                    </Border>
+
+                    <!-- ▶/⏸ Play-Pause -->
+                    <Border Grid.Column="3"
+                        BackgroundColor="#6200EE"
+                        StrokeShape="RoundRectangle 30"
+                        StrokeThickness="0"
+                        WidthRequest="60" HeightRequest="60"
+                        HorizontalOptions="Center">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Tapped="OnPlayPauseTapped"/>
+                        </Border.GestureRecognizers>
+                        <Label x:Name="playPauseIcon"
+                           Text="▶" FontSize="26" TextColor="White"
+                           HorizontalOptions="Center"
+                           VerticalOptions="Center"/>
+                    </Border>
+
+                    <!-- ⏩ Tua tới -->
+                    <Border Grid.Column="5"
+                        BackgroundColor="#EDE7F6"
+                        StrokeShape="RoundRectangle 26"
+                        StrokeThickness="0"
+                        WidthRequest="52" HeightRequest="52"
+                        HorizontalOptions="Center">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Tapped="OnSeekForward"/>
+                        </Border.GestureRecognizers>
+                        <VerticalStackLayout HorizontalOptions="Center"
+                                 VerticalOptions="Center" Spacing="0">
+                            <Label Text="⏩" FontSize="20" HorizontalOptions="Center"/>
+                            <Label Text="+10s" FontSize="9" TextColor="#6200EE"
+                       HorizontalOptions="Center"/>
+                        </VerticalStackLayout>
+                    </Border>
+
+                    <!-- Đóng -->
+                    <Button Grid.Column="7"
+                        Text="✕"
+                        Clicked="OnCloseBottomSheet"
+                        BackgroundColor="#EEEEEE"
+                        TextColor="#555"
+                        CornerRadius="22"
+                        WidthRequest="44" HeightRequest="44"
+                        FontSize="16"
+                        Padding="0"
+                        VerticalOptions="Center"/>
+                </Grid> 
+
+            </Grid>
+        </Border>
+
+    </Grid>
+</ContentPage>

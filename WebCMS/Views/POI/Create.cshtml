@@ -1,0 +1,39 @@
+﻿@model WebCMS.Models.POI
+@{
+    ViewData["Title"] = "Thêm POI mới";
+}
+
+<div class="container mt-4">
+    <h2>Thêm địa điểm du lịch mới</h2>
+    <hr />
+    <form asp-action="Create" method="post" class="col-md-6">
+        <div class="mb-3">
+            <label class="form-label">Mã ID (Ví dụ: POI001)</label>
+            <input asp-for="Id" class="form-control" required />
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Tên địa điểm</label>
+            <input asp-for="Name" class="form-control" required />
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Phân loại</label>
+            <input asp-for="Category" class="form-control" />
+        </div>
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label class="form-label">Vĩ độ (Latitude)</label>
+                <input asp-for="Latitude" type="number" step="any" class="form-control" required />
+            </div>
+            <div class="col-md-6 mb-3">
+                <label class="form-label">Kinh độ (Longitude)</label>
+                <input asp-for="Longitude" type="number" step="any" class="form-control" required />
+            </div>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Mô tả</label>
+            <textarea asp-for="Description" class="form-control" rows="3"></textarea>
+        </div>
+        <button type="submit" class="btn btn-success">Lưu địa điểm</button>
+        <a asp-action="Index" class="btn btn-secondary">Quay lại</a>
+    </form>
+</div>

@@ -1,0 +1,119 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:vm="clr-namespace:TourGuideMauiApp.ViewModels"
+    xmlns:models="clr-namespace:TourGuideMauiApp.Models"
+    x:Class="TourGuideMauiApp.Views.MainPage"
+    x:DataType="vm:MainPageViewModel"
+    Title="Danh sách địa điểm"
+    BackgroundColor="#F5F5F5">
+
+    <Grid RowDefinitions="Auto,*,Auto">
+
+        <!-- Header — dùng Border thay Frame (.NET 9) -->
+        <Border Grid.Row="0"
+                BackgroundColor="#6200EE"
+                StrokeThickness="0"
+                Padding="16,12">
+            <Grid ColumnDefinitions="*,Auto">
+                <VerticalStackLayout Grid.Column="0" Spacing="2">
+                    <Label Text="🗺 Địa điểm du lịch"
+                           FontSize="20" FontAttributes="Bold" TextColor="White"/>
+                    <Label Text="{Binding POIs.Count, StringFormat='{0} địa điểm'}"
+                           FontSize="13" TextColor="#E0D0FF"/>
+                </VerticalStackLayout>
+                <Button Grid.Column="1"
+                        Text="↻ Tải lại"
+                        Clicked="OnRefreshClicked"
+                        BackgroundColor="#7C3AED"
+                        TextColor="White"
+                        CornerRadius="20"
+                        Padding="14,8"
+                        FontSize="13"
+                        IsEnabled="{Binding IsNotLoading}"/>
+            </Grid>
+        </Border>
+
+        <!-- Loading -->
+        <VerticalStackLayout Grid.Row="1"
+                             IsVisible="{Binding IsLoading}"
+                             VerticalOptions="Center"
+                             HorizontalOptions="Center"
+                             Spacing="12">
+            <ActivityIndicator IsRunning="{Binding IsLoading}"
+                               Color="#6200EE"
+                               WidthRequest="48" HeightRequest="48"/>
+            <Label Text="Đang tải dữ liệu..."
+                   FontSize="15" TextColor="#888" HorizontalOptions="Center"/>
+        </VerticalStackLayout>
+
+        <!-- Empty state -->
+        <VerticalStackLayout Grid.Row="1"
+                             IsVisible="{Binding IsEmpty}"
+                             VerticalOptions="Center"
+                             HorizontalOptions="Center"
+                             Spacing="12">
+            <Label Text="📍" FontSize="48" HorizontalOptions="Center"/>
+            <Label Text="Chưa có địa điểm nào"
+                   FontSize="16" TextColor="#888" HorizontalOptions="Center"/>
+            <Label Text="Nhấn 'Tải lại' để thử lại"
+                   FontSize="13" TextColor="#AAA" HorizontalOptions="Center"/>
+        </VerticalStackLayout>
+
+        <!-- Danh sách POI -->
+        <CollectionView Grid.Row="1"
+                        ItemsSource="{Binding POIs}"
+                        IsVisible="{Binding HasData}"
+                        Margin="12,8">
+            <CollectionView.ItemTemplate>
+                <DataTemplate x:DataType="models:POIDTO">
+                    <!-- Border thay Frame -->
+                    <Border Margin="0,6"
+                            BackgroundColor="White"
+                            StrokeShape="RoundRectangle 12"
+                            StrokeThickness="0">
+                        <Grid ColumnDefinitions="6,*">
+                            <BoxView Grid.Column="0"
+                                     BackgroundColor="#6200EE"
+                                     CornerRadius="6"/>
+                            <VerticalStackLayout Grid.Column="1"
+                                                 Padding="14,12" Spacing="4">
+                                <Label Text="{Binding Name}"
+                                       FontAttributes="Bold" FontSize="15"
+                                       TextColor="#1A1A2E"
+                                       LineBreakMode="TailTruncation"/>
+                                <Label Text="{Binding Description}"
+                                       FontSize="13" TextColor="#555"
+                                       MaxLines="2"
+                                       LineBreakMode="TailTruncation"/>
+                                <Label Text="{Binding Address}"
+                                       FontSize="12" TextColor="#777"
+                                       MaxLines="1"
+                                       LineBreakMode="TailTruncation"/>
+                                <Grid ColumnDefinitions="*,*" Margin="0,4,0,0">
+                                    <Label Grid.Column="0" FontSize="11" TextColor="#6200EE" FontAttributes="Bold"
+                                           Text="{Binding DistanceText}"/>
+                                    <Label Grid.Column="1" FontSize="11" TextColor="#999" HorizontalOptions="End"
+                                           Text="{Binding Latitude, StringFormat='📍 {0:F4}°N'}"/>
+                                </Grid>
+                            </VerticalStackLayout>
+                        </Grid>
+                    </Border>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+
+        <!-- Error bar -->
+        <Border Grid.Row="2"
+                IsVisible="{Binding HasError}"
+                BackgroundColor="#FFEBEE"
+                StrokeShape="RoundRectangle 0"
+                StrokeThickness="0"
+                Padding="16,10">
+            <Label Text="{Binding ErrorMessage}"
+                   TextColor="#C62828" FontSize="13"/>
+        </Border>
+
+    </Grid>
+</ContentPage>
