@@ -58,19 +58,28 @@ public partial class MapPage : ContentPage
     {
         base.OnAppearing();
         InitMapIfNeeded();
-        await LoadPoisOnMap();
+
+        // Tải POI nếu chưa có hoặc cần làm mới
+        if (_allPois.Count == 0)
+        {
+            await LoadPoisOnMap();
+        }
+
+        // Đợi một chút để MapControl ổn định layout
+        await Task.Delay(300);
 
         // Kiểm tra nếu có POI được truyền từ trang quét QR hoặc danh sách
         if (!string.IsNullOrEmpty(SelectedPoiId) && int.TryParse(SelectedPoiId, out int id))
         {
+            System.Diagnostics.Debug.WriteLine($"[MapPage] Đang focus vào POI ID: {id}");
             var poi = _allPois.FirstOrDefault(p => p.POIID == id);
             if (poi != null)
             {
                 await FocusOnPoi(poi);
-                SelectedPoiId = null; // Xóa ID sau khi đã xử lý để tránh lặp lại
+                SelectedPoiId = null; // Xóa ID sau khi đã xử lý
             }
         }
-        else
+        else if (_lastLocation == null)
         {
             await ZoomToMyLocation();
         }
@@ -310,7 +319,7 @@ public partial class MapPage : ContentPage
     private async void OnRefreshMapClicked(object sender, EventArgs e) => await LoadPoisOnMap();
     private async void OnMyLocationClicked(object sender, EventArgs e) => await ZoomToMyLocation();
 
-    // ─── HÀM TẠO STYLE HÌNH GHIM (PIN) GIỐNG GOOGLE MAPS ───────────────────
+    // ─── HÀM TẠO STYLE HÌNH GHIM (PIN) GIỐNG HÌNH MẪU ────────────────────
     private static List<IStyle> CreatePinStyle(MapsuiColor pinColor, string labelText = "")
     {
         var styles = new List<IStyle>();
@@ -319,10 +328,9 @@ public partial class MapPage : ContentPage
         styles.Add(new MapsuiSymbol
         {
             SymbolType = SymbolType.Triangle,
-            SymbolScale = 0.4,
+            SymbolScale = 0.45,
             Fill = new MapsuiBrush { Color = pinColor },
-            Outline = new MapsuiPen { Color = MapsuiColor.White, Width = 1 },
-            Offset = new MapsuiOffset(0, -12),
+            Offset = new MapsuiOffset(0, -8),
             RotateWithMap = true,
             SymbolRotation = 180
         });
@@ -331,22 +339,30 @@ public partial class MapPage : ContentPage
         styles.Add(new MapsuiSymbol
         {
             SymbolType = SymbolType.Ellipse,
-            SymbolScale = 0.6,
+            SymbolScale = 0.65,
             Fill = new MapsuiBrush { Color = pinColor },
-            Outline = new MapsuiPen { Color = MapsuiColor.White, Width = 2 },
-            Offset = new MapsuiOffset(0, 4)
+            Offset = new MapsuiOffset(0, 8)
         });
 
-        // 3. Chấm trắng ở giữa đầu ghim
+        // 3. Chấm trắng ở giữa đầu ghim (Lỗ hổng như hình mẫu)
         styles.Add(new MapsuiSymbol
         {
             SymbolType = SymbolType.Ellipse,
-            SymbolScale = 0.2,
+            SymbolScale = 0.25,
             Fill = new MapsuiBrush { Color = MapsuiColor.White },
-            Offset = new MapsuiOffset(0, 4)
+            Offset = new MapsuiOffset(0, 8)
         });
 
-        // 4. Nhãn tên
+        // 4. Vệt sáng (Reflection) - Màu trắng mờ ở góc trên bên trái
+        styles.Add(new MapsuiSymbol
+        {
+            SymbolType = SymbolType.Ellipse,
+            SymbolScale = 0.15,
+            Fill = new MapsuiBrush { Color = MapsuiColor.FromArgb(180, 255, 255, 255) },
+            Offset = new MapsuiOffset(-5, 15)
+        });
+
+        // 5. Nhãn tên
         if (!string.IsNullOrEmpty(labelText))
         {
             styles.Add(new MapsuiLabel
@@ -355,7 +371,7 @@ public partial class MapPage : ContentPage
                 ForeColor = MapsuiColor.Black,
                 BackColor = new MapsuiBrush { Color = MapsuiColor.FromArgb(180, 255, 255, 255) },
                 Font = new MapsuiFont { Size = 11, FontFamily = "sans-serif" },
-                Offset = new MapsuiOffset(0, 28),
+                Offset = new MapsuiOffset(0, 32),
                 HorizontalAlignment = MapsuiLabel.HorizontalAlignmentEnum.Center
             });
         }
