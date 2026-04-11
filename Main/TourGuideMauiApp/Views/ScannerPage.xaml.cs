@@ -59,7 +59,6 @@ public partial class ScannerPage : ContentPage
         try
         {
             // Gọi đúng endpoint /api/POI/qr/{qrValue} — khớp với bảng QRCode trong DB
-            // DB có: QR_PHOHOA_001, QR_BUNBO_002, QR_COMTAM_003, QR_BANHMI_004
             var found = await _dbService.GetPOIByQRAsync(qrValue);
 
             if (found == null)

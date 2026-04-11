@@ -1,0 +1,38 @@
+﻿@model IEnumerable<WebCMS.Models.POITranslation>
+@{
+    ViewData["Title"] = "Nội dung đa ngôn ngữ";
+}
+
+<div class="container mt-4">
+    <h2>Nội dung chi tiết cho POI: @ViewBag.POIID</h2>
+    <div class="mb-3">
+        <a href="/POI/AddTranslation?poiId=@ViewBag.POIID" class="btn btn-primary">+ Thêm bản dịch mới</a>
+        <a asp-action="Index" class="btn btn-outline-secondary">Quay lại danh sách</a>
+    </div>
+
+    <table class="table table-bordered shadow-sm">
+        <thead class="table-dark">
+            <tr>
+                <th>Ngôn ngữ</th>
+                <th>Tên hiển thị</th>
+                <th>Mô tả ngắn</th>
+                <th class="text-center">Thao tác</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var t in Model)
+            {
+                <tr>
+                    <td class="fw-bold">@t.LanguageCode</td>
+                    <td>@t.DisplayName</td>
+                    <td>@t.ShortDescription</td>
+                    <td class="text-center">
+                        <a href="/POI/DeleteTranslation?poiId=@t.POIID&lang=@t.LanguageCode"
+                           class="btn btn-sm btn-danger"
+                           onclick="return confirm('Xóa bản dịch này?')">Xóa</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

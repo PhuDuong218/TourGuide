@@ -7,7 +7,7 @@
         <Tab Title="Danh sách" Icon="dotnet_bot.png">
             <ShellContent ContentTemplate="{DataTemplate views:MainPage}" />
         </Tab>
-        <Tab Title="Bản đồ" Icon="dotnet_bot.png">
+        <Tab Title="Bản đồ" Icon="dotnet_bot.png" Route="MapPage">
             <ShellContent ContentTemplate="{DataTemplate views:MapPage}" />
         </Tab>
         <Tab Title="Quét mã" Icon="dotnet_bot.png">

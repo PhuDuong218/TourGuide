@@ -21,15 +21,20 @@ using MapsuiOffset = Mapsui.Styles.Offset;
 // Alias cho MAUI
 using MauiColor = Microsoft.Maui.Graphics.Color;
 using MauiImage = Microsoft.Maui.Controls.Image;
+using MauiTappedEventArgs = Microsoft.Maui.Controls.TappedEventArgs;
 
 namespace TourGuideMauiApp.Views;
 
+[QueryProperty(nameof(SelectedPoiId), "poiId")]
 public partial class MapPage : ContentPage
 {
+    public string? SelectedPoiId { get; set; } // Nhận ID từ QR Scanner gửi qua
+
     private readonly DatabaseService _dbService = new();
     private readonly TTSService _ttsService = new();
     private readonly GeofenceService _geofenceService = new();
 
+    private Mapsui.UI.Maui.MapControl? _mapControl;
     private MemoryLayer _poiLayer = new() { Name = "PoiLayer" };
     private MemoryLayer _myLocationLayer = new() { Name = "MyLocationLayer" };
     private bool _mapInitialized = false;
@@ -54,8 +59,40 @@ public partial class MapPage : ContentPage
         base.OnAppearing();
         InitMapIfNeeded();
         await LoadPoisOnMap();
-        await ZoomToMyLocation();
+
+        // Kiểm tra nếu có POI được truyền từ trang quét QR hoặc danh sách
+        if (!string.IsNullOrEmpty(SelectedPoiId) && int.TryParse(SelectedPoiId, out int id))
+        {
+            var poi = _allPois.FirstOrDefault(p => p.POIID == id);
+            if (poi != null)
+            {
+                await FocusOnPoi(poi);
+                SelectedPoiId = null; // Xóa ID sau khi đã xử lý để tránh lặp lại
+            }
+        }
+        else
+        {
+            await ZoomToMyLocation();
+        }
+
         StartLocationTracking();
+    }
+
+    private async Task FocusOnPoi(POIDTO poi)
+    {
+        var (x, y) = SphericalMercator.FromLonLat(poi.Longitude, poi.Latitude);
+
+        if (_mapControl != null && _mapControl.Map != null)
+        {
+            // Di chuyển camera đến vị trí POI
+            _mapControl.Map.Navigator.CenterOnAndZoomTo(
+                new MPoint(x, y),
+                _mapControl.Map.Navigator.Resolutions[15]);
+            _mapControl.RefreshGraphics();
+        }
+
+        // Hiện Bottom Sheet chi tiết
+        await ShowPoiDetails(poi);
     }
 
     protected override void OnDisappearing()
@@ -115,8 +152,7 @@ public partial class MapPage : ContentPage
 
         _myLocationLayer.Features = new List<IFeature> { myFeature };
 
-        var mapControl = this.FindByName<Mapsui.UI.Maui.MapControl>("mapView");
-        if (mapControl != null) mapControl.RefreshGraphics();
+        if (_mapControl != null) _mapControl.RefreshGraphics();
     }
 
     private async void OnGeofenceTriggered(POIDTO poi)
@@ -147,7 +183,7 @@ public partial class MapPage : ContentPage
         });
     }
 
-    private async void OnNearestPoiTapped(object sender, TappedEventArgs e)
+    private async void OnNearestPoiTapped(object sender, MauiTappedEventArgs e)
     {
         try
         {
@@ -255,8 +291,8 @@ public partial class MapPage : ContentPage
     {
         if (_mapInitialized) return;
 
-        var mapControl = this.FindByName<Mapsui.UI.Maui.MapControl>("mapView");
-        if (mapControl == null) return;
+        _mapControl = this.FindByName<Mapsui.UI.Maui.MapControl>("mapView");
+        if (_mapControl == null) return;
 
         var map = new Mapsui.Map();
         map.Layers.Add(Mapsui.Tiling.OpenStreetMap.CreateTileLayer());
@@ -266,8 +302,8 @@ public partial class MapPage : ContentPage
         map.Layers.Add(_poiLayer);
         map.Layers.Add(_myLocationLayer);
 
-        mapControl.Map = map;
-        mapControl.Info += OnMapInfo;
+        _mapControl.Map = map;
+        _mapControl.Info += OnMapInfo;
         _mapInitialized = true;
     }
 
@@ -371,8 +407,7 @@ public partial class MapPage : ContentPage
             _allPois = pois;
             _geofenceService.SetPois(pois); // Cập nhật danh sách POI cho Geofence
 
-            var mapControl = this.FindByName<Mapsui.UI.Maui.MapControl>("mapView");
-            if (mapControl != null) mapControl.RefreshGraphics();
+            if (_mapControl != null) _mapControl.RefreshGraphics();
         }
         catch (Exception ex)
         {
@@ -414,13 +449,12 @@ public partial class MapPage : ContentPage
 
             _myLocationLayer.Features = new List<IFeature> { myFeature };
 
-            var mapControl = this.FindByName<Mapsui.UI.Maui.MapControl>("mapView");
-            if (mapControl != null && mapControl.Map != null)
+            if (_mapControl != null && _mapControl.Map != null)
             {
-                mapControl.Map.Navigator.CenterOnAndZoomTo(
+                _mapControl.Map.Navigator.CenterOnAndZoomTo(
                     new MPoint(x, y),
-                    mapControl.Map.Navigator.Resolutions[15]);
-                mapControl.RefreshGraphics();
+                    _mapControl.Map.Navigator.Resolutions[15]);
+                _mapControl.RefreshGraphics();
             }
         }
         catch (FeatureNotSupportedException)
@@ -456,10 +490,10 @@ public partial class MapPage : ContentPage
     }
 
     // ─── Language selection handlers ──────────────────────────────────────────
-    private async void OnLangViTapped(object sender, TappedEventArgs e) => await ChangeLanguage("vi");
-    private async void OnLangEnTapped(object sender, TappedEventArgs e) => await ChangeLanguage("en");
-    private async void OnLangFrTapped(object sender, TappedEventArgs e) => await ChangeLanguage("fr");
-    private async void OnLangJaTapped(object sender, TappedEventArgs e) => await ChangeLanguage("ja");
+    private async void OnLangViTapped(object sender, MauiTappedEventArgs e) => await ChangeLanguage("vi");
+    private async void OnLangEnTapped(object sender, MauiTappedEventArgs e) => await ChangeLanguage("en");
+    private async void OnLangFrTapped(object sender, MauiTappedEventArgs e) => await ChangeLanguage("fr");
+    private async void OnLangJaTapped(object sender, MauiTappedEventArgs e) => await ChangeLanguage("ja");
 
     private async Task ChangeLanguage(string langCode)
     {
@@ -545,7 +579,7 @@ public partial class MapPage : ContentPage
     }
 
     // ─── Play / Pause ─────────────────────────────────────────────────────────
-    private async void OnPlayPauseTapped(object sender, TappedEventArgs e)
+    private async void OnPlayPauseTapped(object sender, MauiTappedEventArgs e)
     {
         await ToggleAudioAsync();
     }
@@ -569,13 +603,13 @@ public partial class MapPage : ContentPage
         }
     }
 
-    private async void OnSeekBackward(object sender, TappedEventArgs e)
+    private async void OnSeekBackward(object sender, MauiTappedEventArgs e)
     {
         await StopAudio();
         await ToggleAudioAsync();
     }
 
-    private async void OnSeekForward(object sender, TappedEventArgs e)
+    private async void OnSeekForward(object sender, MauiTappedEventArgs e)
     {
         await StopAudio();
         await ToggleAudioAsync();

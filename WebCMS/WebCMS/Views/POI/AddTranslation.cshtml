@@ -1,0 +1,26 @@
+﻿@model WebCMS.Models.POITranslation
+@{
+    ViewData["Title"] = "Thêm bản dịch";
+}
+
+<div class="container mt-4">
+    <h2>Thêm bản dịch mới cho POI: @ViewBag.POIID</h2>
+    <form asp-action="AddTranslation" method="post" class="col-md-6">
+        <input type="hidden" name="POIID" value="@ViewBag.POIID" />
+
+        <div class="mb-3">
+            <label class="form-label">Mã ngôn ngữ (vi, en, ja...)</label>
+            <input asp-for="LanguageCode" class="form-control" required />
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Tên hiển thị</label>
+            <input asp-for="DisplayName" class="form-control" required />
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Mô tả ngắn</label>
+            <textarea asp-for="ShortDescription" class="form-control"></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary">Thêm bản dịch</button>
+        <a href="/POI/Translations/@ViewBag.POIID" class="btn btn-secondary">Quay lại</a>
+    </form>
+</div>
