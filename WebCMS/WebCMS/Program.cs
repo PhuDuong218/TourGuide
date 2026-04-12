@@ -14,6 +14,7 @@ if (string.IsNullOrEmpty(apiUrl))
 
 // 🔥 3. ADD MVC
 builder.Services.AddControllersWithViews();
+builder.Services.AddControllers();
 
 // 🔥 4. CẤU HÌNH HTTPCLIENT GỌI API
 // Đăng ký POIService thông qua Interface
@@ -43,6 +44,7 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();
 app.UseAuthorization();
+app.MapControllers();
 
 // 🔥 6. ROUTE
 app.MapControllerRoute(

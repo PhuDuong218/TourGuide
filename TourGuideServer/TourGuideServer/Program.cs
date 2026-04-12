@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using TourGuideServer.Data;
 using TourGuideServer.Services;
+using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -12,32 +13,31 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(connectionString));
 
-// 3. Services
+// 3. Đăng ký các Services
 builder.Services.AddScoped<POIService>();
 
-// 4. Controllers
-builder.Services.AddControllers();
+// 4. Cấu hình Controllers và JSON (QUAN TRỌNG ĐỂ JAVASCRIPT ĐỌC ĐƯỢC)
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        // Đảm bảo tên biến trả về kiểu camelCase (ví dụ: qrId, poiName...)
+        options.JsonSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
+        // Tránh lỗi vòng lặp dữ liệu (Circular Reference)
+        options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
+    });
 
-// 5. CORS — cho phép app mobile gọi API
+// 5. CORS — Cho phép Web Admin (localhost:5016) gọi API
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", policy =>
-        policy.AllowAnyOrigin()
+        policy.AllowAnyOrigin() // Cho phép tất cả các nguồn (Localhost 5016, Mobile...)
               .AllowAnyMethod()
               .AllowAnyHeader());
 });
 
 // 6. Swagger
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen(c =>
-{
-    c.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo
-    {
-        Title = "TourGuide API",
-        Version = "v1",
-        Description = "API cho ứng dụng hướng dẫn du lịch"
-    });
-});
+builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
@@ -48,12 +48,14 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-// Tắt HTTPS redirect để app mobile HTTP hoạt động được
+// Tắt HttpsRedirection nếu bạn đang chạy HTTP ở Local để tránh lỗi SSL
 // app.UseHttpsRedirection();
 
-app.UseCors("AllowAll");  // Phải đặt trước MapControllers
+// 🔥 QUAN TRỌNG: UseCors phải nằm TRƯỚC MapControllers
+app.UseCors("AllowAll");
 
-// 8. Map controllers
+app.UseAuthorization();
+
 app.MapControllers();
 
 app.Run();
