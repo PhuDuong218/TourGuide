@@ -123,5 +123,5 @@ Android Emulator / Device
 
 ##  Author
 
-* Phát triển bởi: **Phú Dương**
+* Phát triển bởi: **Phú Dương**, **Tuyết Nhi**
 * Project phục vụ đồ án học tập
