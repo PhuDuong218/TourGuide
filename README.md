@@ -14,10 +14,15 @@ Trước khi chạy, cần cài:
 
 ## 📁 2. Cấu trúc project
 TourGuide/
+
 │
+
 ├── TourGuideMauiApp   # Mobile App (MAUI)
+
 ├── TourGuideServer    # API Backend (.NET)
+
 ├── WebCMS             # Web quản lý (Admin)
+
 └── TourGuideMauiApp.sln
 
 ##  3. Cách chạy hệ thống
