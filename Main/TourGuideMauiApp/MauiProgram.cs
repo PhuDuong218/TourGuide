@@ -2,8 +2,9 @@
 using Microsoft.Extensions.Logging;
 using TourGuideMauiApp.Services;
 using ZXing.Net.Maui.Controls;
-using Mapsui.UI.Maui;
 using SkiaSharp.Views.Maui.Controls.Hosting;
+
+
 
 namespace TourGuideMauiApp;
 

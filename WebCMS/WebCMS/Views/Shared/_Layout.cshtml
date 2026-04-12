@@ -1,105 +1,111 @@
-﻿<!DOCTYPE html>
-<html lang="en">
+﻿@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+@{
+    var ctx = ViewContext.RouteData.Values["controller"]?.ToString() ?? "";
+}
+<!DOCTYPE html>
+<html lang="vi">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - GPS Admin</title>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
-    <style>
-        body { background-color: #f4f7fe; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; overflow: hidden; }
-        
-        /* Cấu trúc chính chia đôi: Sidebar và Content */
-        .wrapper { display: flex; height: 100vh; width: 100vw; }
-
-        /* Sidebar màu xanh đặc trưng */
-        .sidebar { 
-            width: 260px; 
-            background: #004581; 
-            color: white; 
-            display: flex; 
-            flex-direction: column; 
-            transition: all 0.3s;
-            box-shadow: 4px 0 10px rgba(0,0,0,0.1);
-        }
-
-        .sidebar-header { padding: 30px 25px; font-size: 1.5rem; font-weight: 800; letter-spacing: 1px; }
-
-        .nav-menu { flex: 1; padding: 10px 15px; }
-
-        .nav-item-custom { 
-            display: flex; 
-            align-items: center; 
-            padding: 12px 15px; 
-            color: rgba(255,255,255,0.7); 
-            text-decoration: none; 
-            margin-bottom: 5px; 
-            border-radius: 10px;
-            transition: 0.2s;
-        }
-
-        .nav-item-custom i { margin-right: 12px; font-size: 1.1rem; width: 25px; text-align: center; }
-
-        .nav-item-custom:hover, .nav-item-custom.active { 
-            background: rgba(255,255,255,0.15); 
-            color: white; 
-            font-weight: 600;
-        }
-
-        .sidebar-footer { padding: 20px; border-top: 1px solid rgba(255,255,255,0.1); }
-
-        /* Vùng nội dung chính bên phải */
-        .main-content { 
-            flex: 1; 
-            overflow-y: auto; 
-            padding: 40px; 
-            display: flex; 
-            flex-direction: column; 
-        }
-
-        /* Tùy chỉnh thanh cuộn */
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-thumb { background: #d1d9e6; border-radius: 10px; }
-    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="~/css/admin.css" />
+    @await RenderSectionAsync("Styles", required: false)
 </head>
 <body>
-    <div class="wrapper">
-        <!-- Sidebar bên trái -->
-        <nav class="sidebar">
-            <div class="sidebar-header">
-                <i class="fa-solid fa-location-dot me-2"></i> GPS ADMIN
-            </div>
-            
-            <div class="nav-menu">
-                <a href="/POI" class="nav-item-custom @(ViewContext.RouteData.Values["controller"]?.ToString() == "POI" ? "active" : "")">
-                    <i class="fa-solid fa-map-location-dot"></i> Quản lý điểm (POIs)
-                </a>
-                <a href="/Tours" class="nav-item-custom">
-                    <i class="fa-solid fa-route"></i> Quản lý Tours
-                </a>
-                @* <a href="/Map" class="nav-item-custom">
-                    <i class="fa-solid fa-earth-asia"></i> Bản đồ trực quan
-                </a>
-                <a href="/Settings" class="nav-item-custom">
-                    <i class="fa-solid fa-gear"></i> Cấu hình hệ thống
-                </a> *@
+    <div class="shell">
+
+        <!-- ══ SIDEBAR ══ -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-brand">
+                <div class="brand-icon"><i class="fa-solid fa-location-dot"></i></div>
+                <div class="brand-text">
+                    <span class="brand-name">GPS Admin</span>
+                    <span class="brand-sub">Tour Management</span>
+                </div>
             </div>
 
-            <div class="sidebar-footer">
-                <a href="/Account/Logout" class="nav-item-custom text-warning">
-                    <i class="fa-solid fa-right-from-bracket"></i> Đăng xuất (Logout)
+            <div class="sidebar-section-label">Nội dung</div>
+            <nav class="sidebar-nav">
+                <a asp-controller="POI" asp-action="Index" class="nav-link-item @(ctx == "POI" ? "active" : "")">
+                    <span class="nav-icon"><i class="fa-solid fa-map-pin"></i></span>
+                    <span class="nav-label">Điểm tham quan</span>
                 </a>
-            </div>
-        </nav>
+                <a asp-controller="Tour" asp-action="Index" class="nav-link-item @(ctx == "Tour" ? "active" : "")">
+                    <span class="nav-icon"><i class="fa-solid fa-route"></i></span>
+                    <span class="nav-label">Quản lý Tours</span>
+                </a>
+                <a asp-controller="QRCode" asp-action="Index" class="nav-link-item @(ctx == "QRCode" ? "active" : "")">
+                    <span class="nav-icon"><i class="fa-solid fa-qrcode"></i></span>
+                    <span class="nav-label">Mã QR</span>
+                </a>
+            </nav>
 
-        <!-- Vùng hiển thị nội dung các trang con (Index, Create,...) -->
-        <main class="main-content">
-            @RenderBody()
-        </main>
+            <div class="sidebar-section-label">Phân tích</div>
+            <nav class="sidebar-nav">
+                <a asp-controller="VisitHistory" asp-action="Index" class="nav-link-item @(ctx == "VisitHistory" ? "active" : "")">
+                    <span class="nav-icon"><i class="fa-solid fa-chart-line"></i></span>
+                    <span class="nav-label">Lịch sử truy cập</span>
+                </a>
+            </nav>
+
+            <div class="sidebar-section-label">Hệ thống</div>
+            <nav class="sidebar-nav">
+                <a asp-controller="Users" asp-action="Index" class="nav-link-item @(ctx == "Users" ? "active" : "")">
+                    <span class="nav-icon"><i class="fa-solid fa-users"></i></span>
+                    <span class="nav-label">Quản lý người dùng</span>
+                </a>
+                <a asp-controller="Account" asp-action="Logout" class="nav-link-item nav-danger">
+                    <span class="nav-icon"><i class="fa-solid fa-right-from-bracket"></i></span>
+                    <span class="nav-label">Đăng xuất</span>
+                </a>
+            </nav>
+        </aside>
+
+        <!-- ══ MAIN ══ -->
+        <div class="main-wrap">
+            <header class="topbar">
+                <button class="topbar-toggle" onclick="document.getElementById('sidebar').classList.toggle('collapsed')">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
+                <div class="topbar-title">@ViewData["Title"]</div>
+                <div class="topbar-right">
+                    <div class="topbar-user">
+                        <div class="user-avatar">A</div>
+                        <span class="user-name">Admin</span>
+                    </div>
+                </div>
+            </header>
+
+            <main class="page-content">
+                @if (TempData["Success"] != null)
+                {
+                    <div class="alert-toast toast-success">
+                        <i class="fa-solid fa-circle-check"></i> @TempData["Success"]
+                    </div>
+                }
+                @if (TempData["Error"] != null)
+                {
+                    <div class="alert-toast toast-error">
+                        <i class="fa-solid fa-circle-xmark"></i> @TempData["Error"]
+                    </div>
+                }
+                @RenderBody()
+            </main>
+        </div>
     </div>
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.querySelectorAll('.alert-toast').forEach(el => {
+            setTimeout(() => el.style.opacity = '0', 3500);
+            setTimeout(() => el.remove(), 4000);
+        });
+    </script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

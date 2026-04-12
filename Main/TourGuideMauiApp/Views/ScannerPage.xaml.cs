@@ -29,7 +29,7 @@ public partial class ScannerPage : ContentPage
     protected override void OnDisappearing()
     {
         base.OnDisappearing();
-        barcodeReader.IsDetecting = false;  // Tắt camera tiết kiệm pin
+        //barcodeReader.IsDetecting = false;  // Tắt camera tiết kiệm pin
     }
 
     // ── Quét được mã QR ──────────────────────────────────────────────────────
@@ -82,6 +82,10 @@ public partial class ScannerPage : ContentPage
                 ? found.Description : found.Narration;
 
             await _ttsService.SpeakAsync(narration);
+
+            // --- TỰ ĐỘNG CHUYỂN QUA MAP ---
+            await Task.Delay(1500); // Đợi 1.5 giây để xem thông tin
+            await Shell.Current.GoToAsync($"//MapPage?poiId={found.POIID}");
         }
         catch (Exception ex)
         {

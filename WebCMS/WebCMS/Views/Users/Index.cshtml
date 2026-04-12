@@ -1,0 +1,202 @@
+﻿@{
+    ViewData["Title"] = "Quản lý người dùng";
+}
+
+<div class="page-header">
+    <div class="page-header-left">
+        <h1>Quản lý người dùng</h1>
+        <p>Quản lý tài khoản admin và người dùng hệ thống</p>
+    </div>
+    <button class="btn-primary-admin" onclick="showCreateModal()">
+        <i class="fa-solid fa-user-plus"></i> Thêm người dùng
+    </button>
+</div>
+
+<div class="admin-card">
+    <div class="admin-card-header">
+        <span class="admin-card-title">Danh sách người dùng</span>
+        <div class="search-box">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input type="text" class="search-input" id="searchInput" placeholder="Tìm theo username, email...">
+        </div>
+    </div>
+    <div class="admin-card-body">
+        <table class="admin-table" id="userTable">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Người dùng</th>
+                    <th>Email</th>
+                    <th>Vai trò</th>
+                    <th style="width:120px;text-align:center">Thao tác</th>
+                </tr>
+            </thead>
+            <tbody id="userBody">
+                <tr>
+                    <td colspan="5" style="text-align:center;padding:40px;color:var(--text-muted)">
+                        <i class="fa-solid fa-spinner fa-spin"></i> Đang tải...
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Create Modal -->
+<div id="createModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;align-items:center;justify-content:center">
+    <div style="background:white;border-radius:16px;padding:32px;width:480px;max-width:90vw">
+        <h3 style="font-size:16px;font-weight:800;margin-bottom:20px" id="modalTitle">Thêm người dùng mới</h3>
+        <input type="hidden" id="editUserId">
+        <div class="form-group">
+            <label class="form-label-admin">Username</label>
+            <input type="text" id="inpUsername" class="form-control-admin" placeholder="admin">
+        </div>
+        <div class="form-group">
+            <label class="form-label-admin">Họ tên</label>
+            <input type="text" id="inpFullName" class="form-control-admin" placeholder="Nguyễn Văn A">
+        </div>
+        <div class="form-group">
+            <label class="form-label-admin">Email</label>
+            <input type="email" id="inpEmail" class="form-control-admin" placeholder="email@example.com">
+        </div>
+        <div class="form-group">
+            <label class="form-label-admin">Mật khẩu <span id="pwHint" style="font-weight:400;text-transform:none;letter-spacing:0">(để trống = không đổi)</span></label>
+            <input type="password" id="inpPassword" class="form-control-admin" placeholder="••••••">
+        </div>
+        <div class="form-group">
+            <label class="form-label-admin">Vai trò</label>
+            <select id="inpRole" class="form-control-admin">
+                <option value="admin">Admin</option>
+                <option value="owner">Owner (Chủ địa điểm)</option>
+                <option value="user">User (Người dùng)</option>
+            </select>
+        </div>
+        <div class="form-actions">
+            <button class="btn-primary-admin" onclick="saveUser()">
+                <i class="fa-solid fa-floppy-disk"></i> Lưu
+            </button>
+            <button class="btn-outline-admin" onclick="hideModal()">Hủy</button>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const API = '';
+        const roleColors = { admin:'badge-purple', owner:'badge-amber', user:'badge-gray' };
+        const roleLabels = { admin:'Admin', owner:'Owner', user:'User' };
+
+        async function loadUsers() {
+            const res   = await fetch(`${API}/api/User`);
+            const users = await res.json();
+
+            document.getElementById('userBody').innerHTML = users.length
+                ? users.map(u => `<tr>
+                    <td><span class="table-id">#${u.userID}</span></td>
+                    <td>
+                        <div style="display:flex;align-items:center;gap:10px">
+                            <div class="user-avatar" style="width:32px;height:32px;font-size:13px">
+                                ${u.username[0].toUpperCase()}
+                            </div>
+                            <div>
+                                <div style="font-weight:600">${u.username}</div>
+                                <div style="font-size:12px;color:var(--text-muted)">${u.fullName}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td style="color:var(--text-muted)">${u.email}</td>
+                    <td>
+                        <span class="badge-category ${roleColors[u.role]||'badge-gray'}">
+                            ${roleLabels[u.role]||u.role}
+                        </span>
+                    </td>
+                    <td style="text-align:center">
+                        <div style="display:flex;gap:6px;justify-content:center">
+                            <button class="btn-icon-admin info" onclick="editUser(${u.userID},'${u.username}','${u.fullName}','${u.email}','${u.role}')" title="Sửa">
+                                <i class="fa-solid fa-pen"></i>
+                            </button>
+                            <button class="btn-icon-admin danger" onclick="deleteUser(${u.userID},'${u.username}')" title="Xóa">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>`).join('')
+                : '<tr><td colspan="5" style="text-align:center;padding:40px;color:var(--text-muted)">Không có dữ liệu</td></tr>';
+        }
+
+        function showCreateModal() {
+            document.getElementById('modalTitle').textContent = 'Thêm người dùng mới';
+            document.getElementById('editUserId').value = '';
+            document.getElementById('inpUsername').disabled = false;
+            document.getElementById('pwHint').style.display = 'none';
+            ['inpUsername','inpFullName','inpEmail','inpPassword'].forEach(id => document.getElementById(id).value = '');
+            document.getElementById('inpRole').value = 'user';
+            document.getElementById('createModal').style.display = 'flex';
+        }
+
+        function editUser(id, username, fullName, email, role) {
+            document.getElementById('modalTitle').textContent = `Sửa người dùng: ${username}`;
+            document.getElementById('editUserId').value   = id;
+            document.getElementById('inpUsername').value  = username;
+            document.getElementById('inpUsername').disabled = true;
+            document.getElementById('inpFullName').value  = fullName;
+            document.getElementById('inpEmail').value     = email;
+            document.getElementById('inpRole').value      = role;
+            document.getElementById('inpPassword').value  = '';
+            document.getElementById('pwHint').style.display = 'inline';
+            document.getElementById('createModal').style.display = 'flex';
+        }
+
+        function hideModal() {
+            document.getElementById('createModal').style.display = 'none';
+        }
+
+        async function saveUser() {
+            const id       = document.getElementById('editUserId').value;
+            const username = document.getElementById('inpUsername').value.trim();
+            const fullName = document.getElementById('inpFullName').value.trim();
+            const email    = document.getElementById('inpEmail').value.trim();
+            const password = document.getElementById('inpPassword').value;
+            const role     = document.getElementById('inpRole').value;
+
+            if (!fullName || !email) return alert('Vui lòng nhập đầy đủ họ tên và email.');
+
+            let res;
+            if (id) {
+                res = await fetch(`${API}/api/User/${id}`, {
+                    method: 'PUT',
+                    headers: {'Content-Type':'application/json'},
+                    body: JSON.stringify({ email, fullName, role, password: password || undefined })
+                });
+            } else {
+                if (!username || !password) return alert('Username và mật khẩu không được để trống.');
+                res = await fetch(`${API}/api/User`, {
+                    method: 'POST',
+                    headers: {'Content-Type':'application/json'},
+                    body: JSON.stringify({ username, email, password, fullName, role })
+                });
+            }
+
+            if (res.ok) { hideModal(); loadUsers(); }
+            else {
+                const err = await res.json();
+                alert(err.message || 'Lỗi lưu người dùng');
+            }
+        }
+
+        async function deleteUser(id, username) {
+            if (!confirm(`Xóa tài khoản "${username}"?`)) return;
+            await fetch(`${API}/api/User/${id}`, { method: 'DELETE' });
+            loadUsers();
+        }
+
+        document.getElementById('searchInput')?.addEventListener('input', function() {
+            const q = this.value.toLowerCase();
+            document.querySelectorAll('#userTable tbody tr').forEach(row => {
+                row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none';
+            });
+        });
+
+        loadUsers();
+    </script>
+}

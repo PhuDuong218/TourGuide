@@ -3,37 +3,105 @@
     ViewData["Title"] = "Thêm POI mới";
 }
 
-<div class="container mt-4">
-    <h2>Thêm địa điểm du lịch mới</h2>
-    <hr />
-    <form asp-action="Create" method="post" class="col-md-6">
-        <div class="mb-3">
-            <label class="form-label">Mã ID (Ví dụ: POI001)</label>
-            <input asp-for="Id" class="form-control" required />
+<div style="max-width:760px">
+    <!-- Back -->
+    <a href="/POI" class="btn-outline-admin" style="margin-bottom:24px;display:inline-flex">
+        <i class="fa-solid fa-arrow-left"></i> Quay lại danh sách
+    </a>
+
+    <div class="form-card">
+        <div style="margin-bottom:28px">
+            <h2 style="font-size:18px;font-weight:800;color:var(--text)">Thêm địa điểm mới</h2>
+            <p style="font-size:13px;color:var(--text-muted);margin-top:4px">Điền thông tin cơ bản. Nội dung thuyết minh sẽ thêm sau ở mục Bản dịch.</p>
         </div>
-        <div class="mb-3">
-            <label class="form-label">Tên địa điểm</label>
-            <input asp-for="Name" class="form-control" required />
-        </div>
-        <div class="mb-3">
-            <label class="form-label">Phân loại</label>
-            <input asp-for="Category" class="form-control" />
-        </div>
-        <div class="row">
-            <div class="col-md-6 mb-3">
-                <label class="form-label">Vĩ độ (Latitude)</label>
-                <input asp-for="Latitude" type="number" step="any" class="form-control" required />
+
+        <form asp-action="Create" method="post">
+
+            <div class="form-group">
+                <label class="form-label-admin">Tên địa điểm *</label>
+                <input asp-for="Name" class="form-control-admin" placeholder="VD: Chùa Cầu, Hội An" required />
             </div>
-            <div class="col-md-6 mb-3">
-                <label class="form-label">Kinh độ (Longitude)</label>
-                <input asp-for="Longitude" type="number" step="any" class="form-control" required />
+
+            <div class="form-grid-2">
+                <div class="form-group">
+                    <label class="form-label-admin">Phân loại</label>
+                    <input asp-for="Category" class="form-control-admin" placeholder="VD: Di tích, Ẩm thực, Chợ..." />
+                </div>
+                <div class="form-group">
+                    <label class="form-label-admin">Loại</label>
+                    <select asp-for="Type" class="form-control-admin">
+                        <option value="">-- Chọn loại --</option>
+                        <option value="MAIN">Điểm chính (MAIN)</option>
+                        <option value="WC">WC</option>
+                        <option value="TICKET">Bán vé</option>
+                        <option value="PARKING">Gửi xe</option>
+                        <option value="BOAT">Bến thuyền</option>
+                    </select>
+                </div>
             </div>
-        </div>
-        <div class="mb-3">
-            <label class="form-label">Mô tả</label>
-            <textarea asp-for="Description" class="form-control" rows="3"></textarea>
-        </div>
-        <button type="submit" class="btn btn-success">Lưu địa điểm</button>
-        <a asp-action="Index" class="btn btn-secondary">Quay lại</a>
-    </form>
+
+            <div class="form-grid-2">
+                <div class="form-group">
+                    <label class="form-label-admin">Vĩ độ (Latitude) *</label>
+                    <input asp-for="Latitude" type="number" step="0.000001"
+                           class="form-control-admin" placeholder="VD: 15.877600"
+                           id="latInput" required />
+                    <div class="form-hint">Khoảng 15.870 – 15.885 (Hội An)</div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label-admin">Kinh độ (Longitude) *</label>
+                    <input asp-for="Longitude" type="number" step="0.000001"
+                           class="form-control-admin" placeholder="VD: 108.327000"
+                           id="lngInput" required />
+                    <div class="form-hint">Khoảng 108.320 – 108.340 (Hội An)</div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label-admin">Địa chỉ</label>
+                <input asp-for="Description" class="form-control-admin" placeholder="VD: 1 Nguyễn Thị Minh Khai, Hội An" />
+            </div>
+
+            <div class="form-group">
+                <label class="form-label-admin">URL ảnh đại diện</label>
+                <input asp-for="Image" class="form-control-admin" placeholder="https://..." id="imageUrlInput" />
+                <div id="imagePreview" style="margin-top:10px;display:none">
+                    <img id="previewImg" src="" alt="Preview"
+                         style="height:100px;border-radius:8px;border:1px solid var(--border);object-fit:cover" />
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label-admin">Bán kính geofence (m)</label>
+                <input asp-for="Radius" type="number" class="form-control-admin"
+                       placeholder="50" value="50" min="10" max="500" />
+                <div class="form-hint">Phạm vi kích hoạt thuyết minh khi khách đến gần. Mặc định 50m.</div>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn-primary-admin">
+                    <i class="fa-solid fa-floppy-disk"></i> Lưu địa điểm
+                </button>
+                <a href="/POI" class="btn-outline-admin">Hủy</a>
+            </div>
+        </form>
+    </div>
 </div>
+
+@section Scripts {
+    <script>
+        // Image preview
+        document.getElementById('imageUrlInput')?.addEventListener('blur', function() {
+            const url = this.value.trim();
+            const preview = document.getElementById('imagePreview');
+            const img = document.getElementById('previewImg');
+            if (url) {
+                img.src = url;
+                img.onerror = () => preview.style.display = 'none';
+                img.onload  = () => preview.style.display = 'block';
+            } else {
+                preview.style.display = 'none';
+            }
+        });
+    </script>
+}

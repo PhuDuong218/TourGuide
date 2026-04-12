@@ -1,26 +1,82 @@
 ﻿@model WebCMS.Models.POITranslation
 @{
     ViewData["Title"] = "Thêm bản dịch";
+    var langFlags = new Dictionary<string, string> {
+        {"vi","🇻🇳 Tiếng Việt"},{"en","🇬🇧 English"},{"fr","🇫🇷 Français"},
+        {"ja","🇯🇵 日本語"},{"ko","🇰🇷 한국어"},{"ru","🇷🇺 Русский"},{"ch","🇨🇳 中文"}
+    };
 }
 
-<div class="container mt-4">
-    <h2>Thêm bản dịch mới cho POI: @ViewBag.POIID</h2>
-    <form asp-action="AddTranslation" method="post" class="col-md-6">
-        <input type="hidden" name="POIID" value="@ViewBag.POIID" />
+<div style="max-width:700px">
+    <a href="/POI/Translations/@ViewBag.POIID" class="btn-outline-admin" style="margin-bottom:24px;display:inline-flex">
+        <i class="fa-solid fa-arrow-left"></i> Quay lại bản dịch POI #@ViewBag.POIID
+    </a>
 
-        <div class="mb-3">
-            <label class="form-label">Mã ngôn ngữ (vi, en, ja...)</label>
-            <input asp-for="LanguageCode" class="form-control" required />
+    <div class="form-card">
+        <div style="margin-bottom:28px">
+            <h2 style="font-size:18px;font-weight:800;color:var(--text)">Thêm bản dịch mới</h2>
+            <p style="font-size:13px;color:var(--text-muted);margin-top:4px">Nội dung thuyết minh sẽ được đọc bằng TTS khi khách đến gần địa điểm.</p>
         </div>
-        <div class="mb-3">
-            <label class="form-label">Tên hiển thị</label>
-            <input asp-for="DisplayName" class="form-control" required />
-        </div>
-        <div class="mb-3">
-            <label class="form-label">Mô tả ngắn</label>
-            <textarea asp-for="ShortDescription" class="form-control"></textarea>
-        </div>
-        <button type="submit" class="btn btn-primary">Thêm bản dịch</button>
-        <a href="/POI/Translations/@ViewBag.POIID" class="btn btn-secondary">Quay lại</a>
-    </form>
+
+        <form asp-action="AddTranslation" method="post">
+            <input type="hidden" name="POIID" value="@ViewBag.POIID" />
+
+            <div class="form-group">
+                <label class="form-label-admin">Ngôn ngữ *</label>
+                <select asp-for="LanguageCode" class="form-control-admin" required>
+                    <option value="">-- Chọn ngôn ngữ --</option>
+                    @foreach (var kv in langFlags)
+                    {
+                        <option value="@kv.Key">@kv.Value</option>
+                    }
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label-admin">Tên hiển thị *</label>
+                <input asp-for="DisplayName" class="form-control-admin"
+                       placeholder="Tên địa điểm theo ngôn ngữ này" required maxlength="200" />
+            </div>
+
+            <div class="form-group">
+                <label class="form-label-admin">Mô tả ngắn</label>
+                <input asp-for="ShortDescription" class="form-control-admin"
+                       placeholder="Một câu mô tả ngắn gọn" maxlength="500" />
+                <div class="form-hint">Hiển thị trên card địa điểm trong app. Tối đa 500 ký tự.</div>
+            </div>
+
+            <div class="form-group">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:7px">
+                    <label class="form-label-admin" style="margin:0">Nội dung thuyết minh (TTS) *</label>
+                    <span id="charCount" style="font-size:12px;color:var(--text-muted);font-family:var(--font-mono)">0 / 2000</span>
+                </div>
+                <textarea asp-for="NarrationText" class="form-control-admin" rows="6"
+                          placeholder="Viết nội dung đầy đủ để máy đọc khi khách tiếp cận địa điểm này..."
+                          id="narrationText" maxlength="2000" required></textarea>
+                <div class="form-hint">
+                    <i class="fa-solid fa-lightbulb" style="color:var(--warning)"></i>
+                    Viết như giọng hướng dẫn viên — tự nhiên, sinh động, khoảng 2-4 câu.
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn-primary-admin">
+                    <i class="fa-solid fa-floppy-disk"></i> Lưu bản dịch
+                </button>
+                <a href="/POI/Translations/@ViewBag.POIID" class="btn-outline-admin">Hủy</a>
+            </div>
+        </form>
+    </div>
 </div>
+
+@section Scripts {
+    <script>
+        const ta = document.getElementById('narrationText');
+        const counter = document.getElementById('charCount');
+        if (ta && counter) {
+            const update = () => counter.textContent = ta.value.length + ' / 2000';
+            ta.addEventListener('input', update);
+            update();
+        }
+    </script>
+}

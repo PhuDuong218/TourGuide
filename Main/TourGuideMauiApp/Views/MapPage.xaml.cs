@@ -2,20 +2,12 @@
 using Mapsui.Layers;
 using Mapsui.Projections;
 using Mapsui.Styles;
+using SkiaSharp;
 using TourGuideMauiApp.Models;
 using TourGuideMauiApp.Services;
-using System;
-using System.Linq;
-using Microsoft.Maui.Devices.Sensors;
-using Microsoft.Maui.ApplicationModel;
 
-// Alias tránh ambiguous reference (CS0104)
-using MapsuiBrush = Mapsui.Styles.Brush;
 using MapsuiColor = Mapsui.Styles.Color;
-using MapsuiPen = Mapsui.Styles.Pen;
-using MapsuiFont = Mapsui.Styles.Font;
 using MapsuiSymbol = Mapsui.Styles.SymbolStyle;
-using MapsuiLabel = Mapsui.Styles.LabelStyle;
 using MapsuiOffset = Mapsui.Styles.Offset;
 
 // Alias cho MAUI
@@ -97,11 +89,13 @@ public partial class MapPage : ContentPage
             _mapControl.Map.Navigator.CenterOnAndZoomTo(
                 new MPoint(x, y),
                 _mapControl.Map.Navigator.Resolutions[15]);
+
+            // Đợi 1 chút để bản đồ ổn định rồi hiện Bottom Sheet
+            await Task.Delay(500);
+            await ShowPoiDetails(poi);
+
             _mapControl.RefreshGraphics();
         }
-
-        // Hiện Bottom Sheet chi tiết
-        await ShowPoiDetails(poi);
     }
 
     protected override void OnDisappearing()
@@ -319,79 +313,86 @@ public partial class MapPage : ContentPage
     private async void OnRefreshMapClicked(object sender, EventArgs e) => await LoadPoisOnMap();
     private async void OnMyLocationClicked(object sender, EventArgs e) => await ZoomToMyLocation();
 
-    // ─── HÀM TẠO STYLE HÌNH GHIM (PIN) GIỐNG HÌNH MẪU ────────────────────
-    private static List<IStyle> CreatePinStyle(MapsuiColor pinColor, string labelText = "")
+    // ─── VẼ ICON GHIM PHẲNG (GIỐNG HÌNH BẠN GỬI) ───────────────────────────
+    private static byte[] CreatePinBitmap(SkiaSharp.SKColor bodyColor)
+    {
+        const int W = 80, H = 100;
+        using var surface = SKSurface.Create(new SKImageInfo(W, H, SKColorType.Rgba8888));
+        var canvas = surface.Canvas;
+        canvas.Clear(SKColors.Transparent);
+
+        using var paint = new SKPaint { IsAntialias = true, Color = bodyColor, Style = SKPaintStyle.Fill };
+        float cx = W / 2f;
+        float r = W / 2.5f;
+
+        using var path = new SKPath();
+        path.MoveTo(cx, H - 5);
+        path.ArcTo(new SKRect(cx - r, 5, cx + r, 5 + 2 * r), 135, 270, false);
+        path.Close();
+        canvas.DrawPath(path, paint);
+
+        using var whitePaint = new SKPaint { IsAntialias = true, Color = SKColors.White, Style = SKPaintStyle.Fill };
+        canvas.DrawCircle(cx, r + 5, r * 0.4f, whitePaint);
+
+        using var image = surface.Snapshot();
+        using var data = image.Encode(SKEncodedImageFormat.Png, 100);
+        return data.ToArray();
+    }
+
+    private static List<IStyle> CreatePinStyle(Mapsui.Styles.Color pinColor, string labelText = "")
     {
         var styles = new List<IStyle>();
 
-        // 1. Đuôi ghim (Hình tam giác nhọn phía dưới)
-        styles.Add(new MapsuiSymbol
+        styles.Add(new SymbolStyle
         {
-            SymbolType = SymbolType.Triangle,
-            SymbolScale = 0.45,
-            Fill = new MapsuiBrush { Color = pinColor },
-            Offset = new MapsuiOffset(0, -8),
-            RotateWithMap = true,
-            SymbolRotation = 180
+            SymbolScale = 0.7,
+
+            Fill = new Mapsui.Styles.Brush
+            {
+                Color = pinColor
+            },
+
+            Outline = new Pen
+            {
+                Color = MapsuiColor.White,
+                Width = 3
+            }
         });
 
-        // 2. Đầu ghim (Hình tròn lớn)
-        styles.Add(new MapsuiSymbol
-        {
-            SymbolType = SymbolType.Ellipse,
-            SymbolScale = 0.65,
-            Fill = new MapsuiBrush { Color = pinColor },
-            Offset = new MapsuiOffset(0, 8)
-        });
-
-        // 3. Chấm trắng ở giữa đầu ghim (Lỗ hổng như hình mẫu)
-        styles.Add(new MapsuiSymbol
-        {
-            SymbolType = SymbolType.Ellipse,
-            SymbolScale = 0.25,
-            Fill = new MapsuiBrush { Color = MapsuiColor.White },
-            Offset = new MapsuiOffset(0, 8)
-        });
-
-        // 4. Vệt sáng (Reflection) - Màu trắng mờ ở góc trên bên trái
-        styles.Add(new MapsuiSymbol
-        {
-            SymbolType = SymbolType.Ellipse,
-            SymbolScale = 0.15,
-            Fill = new MapsuiBrush { Color = MapsuiColor.FromArgb(180, 255, 255, 255) },
-            Offset = new MapsuiOffset(-5, 15)
-        });
-
-        // 5. Nhãn tên
         if (!string.IsNullOrEmpty(labelText))
         {
-            styles.Add(new MapsuiLabel
+            styles.Add(new LabelStyle
             {
                 Text = labelText,
+
                 ForeColor = MapsuiColor.Black,
-                BackColor = new MapsuiBrush { Color = MapsuiColor.FromArgb(180, 255, 255, 255) },
-                Font = new MapsuiFont { Size = 11, FontFamily = "sans-serif" },
-                Offset = new MapsuiOffset(0, 32),
-                HorizontalAlignment = MapsuiLabel.HorizontalAlignmentEnum.Center
+
+                BackColor = new Mapsui.Styles.Brush
+                {
+                    Color = MapsuiColor.FromArgb(180, 255, 255, 255)
+                },
+
+                Font = new Mapsui.Styles.Font
+                {
+                    Size = 11
+                },
+
+                Offset = new Offset(0, 20),
+
+                HorizontalAlignment = LabelStyle.HorizontalAlignmentEnum.Center
             });
         }
 
         return styles;
     }
 
-    // ─── Load POI + vẽ ghim lên bản đồ ──────────────────────────────────────
     private async Task LoadPoisOnMap()
     {
         ShowLoading("Đang tải địa điểm...");
         try
         {
             var pois = await _dbService.GetPointsOfInterestAsync();
-            if (pois == null || pois.Count == 0)
-            {
-                await DisplayAlert("Thông báo",
-                    "Không có dữ liệu địa điểm từ Server.\nKiểm tra lại IP và port!", "OK");
-                return;
-            }
+            if (pois == null || pois.Count == 0) return;
 
             var features = new List<IFeature>();
             var googleRed = MapsuiColor.FromArgb(255, 219, 68, 55);
@@ -400,7 +401,6 @@ public partial class MapPage : ContentPage
             {
                 var (x, y) = SphericalMercator.FromLonLat(poi.Longitude, poi.Latitude);
                 var feature = new PointFeature(x, y);
-
                 feature["POIID"] = poi.POIID;
                 feature["Name"] = poi.Name;
                 feature["Description"] = poi.Description;
@@ -410,25 +410,15 @@ public partial class MapPage : ContentPage
                 feature["Latitude"] = poi.Latitude;
                 feature["Longitude"] = poi.Longitude;
 
-                // Áp dụng style GHIM ĐỎ
-                foreach (var style in CreatePinStyle(googleRed, poi.Name))
-                {
-                    feature.Styles.Add(style);
-                }
-
+                foreach (var style in CreatePinStyle(googleRed, poi.Name)) feature.Styles.Add(style);
                 features.Add(feature);
             }
-
             _poiLayer.Features = features;
             _allPois = pois;
-            _geofenceService.SetPois(pois); // Cập nhật danh sách POI cho Geofence
-
+            _geofenceService.SetPois(pois);
             if (_mapControl != null) _mapControl.RefreshGraphics();
         }
-        catch (Exception ex)
-        {
-            await DisplayAlert("Lỗi", $"Không thể tải địa điểm: {ex.Message}", "OK");
-        }
+        catch (Exception ex) { System.Diagnostics.Debug.WriteLine(ex.Message); }
         finally { HideLoading(); }
     }
 
