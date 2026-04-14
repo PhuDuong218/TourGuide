@@ -1,0 +1,86 @@
+﻿@{
+    ViewData["Title"] = "Thêm mã QR mới";
+    string apiUrl = ViewBag.ApiUrl ?? "";
+}
+
+<div style="max-width: 760px;">
+    <a asp-controller="QRCode" asp-action="Index" class="btn-outline-admin" style="margin-bottom:15px; display:inline-flex; text-decoration: none; color: #4b5563;">
+        <i class="fa-solid fa-arrow-left" style="margin-right: 8px;"></i> Danh sách mã QR
+    </a>
+
+    <div class="admin-card" style="background: white; border-radius: 12px; padding: 24px; box-shadow: 0 2px 15px rgba(0,0,0,0.08);">
+        <h3 style="margin-top: 0; color: #1f2937; margin-bottom: 20px;">Tạo mã QR mới</h3>
+
+        <div style="margin-bottom: 15px;">
+            <label style="display: block; margin-bottom: 5px; font-weight: 600; font-size: 14px; color: #4b5563;">Mã địa điểm (POIID) *</label>
+            <input type="text" id="poiIdInput" class="form-control-admin" style="width: 100%; padding: 12px; border: 1px solid #d1d5db; border-radius: 6px;" placeholder="VD: P001">
+            <p style="font-size: 12px; color: #6b7280; margin-top: 5px;">Mã POIID phải khớp với một địa điểm có sẵn trong hệ thống.</p>
+        </div>
+
+        <div style="margin-bottom: 25px;">
+            <label style="display: block; margin-bottom: 5px; font-weight: 600; font-size: 14px; color: #4b5563;">Giá trị mã QR (QRValue) *</label>
+            <input type="text" id="qrValueInput" class="form-control-admin" style="width: 100%; padding: 12px; border: 1px solid #d1d5db; border-radius: 6px;" placeholder="VD: QR_PHOHOA_001">
+        </div>
+
+        <div style="display: flex; gap: 10px;">
+            <button id="btnSubmit" onclick="submitCreateQR()" style="padding: 10px 24px; border: none; background: #6200EE; color: white; border-radius: 6px; cursor: pointer; font-weight: 600;">
+                <i class="fa-solid fa-floppy-disk"></i> Lưu mã QR
+            </button>
+            <a asp-controller="QRCode" asp-action="Index" style="padding: 10px 24px; border: 1px solid #d1d5db; background: white; border-radius: 6px; cursor: pointer; color: #4b5563; text-decoration: none;">Hủy</a>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const API_URL = '@ViewBag.ApiUrl';
+
+        async function submitCreateQR() {
+            const poiid = document.getElementById('poiIdInput').value.trim();
+            const qrValue = document.getElementById('qrValueInput').value.trim();
+
+            if (!poiid || !qrValue) {
+                alert("Vui lòng nhập đầy đủ Mã POIID và Giá trị QR!");
+                return;
+            }
+
+            const btn = document.getElementById('btnSubmit');
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang lưu...';
+            btn.disabled = true;
+
+            // 1. SỬA LỖI TRÀN CỘT: Ép ID chỉ có 4 ký tự (Từ Q100 đến Q999)
+            const randomQrId = "Q" + Math.floor(100 + Math.random() * 900);
+
+            // 2. CHUẨN HÓA TÊN BIẾN: Đổi thành chữ thường ở đầu để API C# dễ nhận diện
+            const payload = {
+                QRID: randomQrId,
+                POIID: poiid,
+                QRValue: qrValue,
+                CreatedAt: new Date().toISOString()
+            };
+
+            try {
+                const response = await fetch(`${API_URL}QRCode`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (response.ok) {
+                    alert("Tạo mã QR mới thành công!");
+                    window.location.href = '/QRCode/Index';
+                } else {
+                    // 3. SỬA LỖI "ĐOÁN MÒ": Đọc lỗi thật sự từ Server C# trả về
+                    const errorText = await response.text();
+                    alert(`Lỗi Server (HTTP ${response.status}):\n${errorText}`);
+                }
+            } catch (err) {
+                console.error("Lỗi khi tạo:", err);
+                alert("Không thể kết nối đến Server API để tạo mới!");
+            } finally {
+                btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Lưu mã QR';
+                btn.disabled = false;
+            }
+        }
+    </script>
+}

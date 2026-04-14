@@ -14,11 +14,16 @@ namespace TourGuideServer.Services
             _context = context;
         }
 
-        // ── Helper map POI → DTO ─────────────────────────────────────────────
         private static POIDTO MapToDTO(POI p, string lang)
         {
             var byLang = p.Translations.Where(t => t.LanguageCode == lang).ToList();
             var any = p.Translations.ToList();
+
+            
+            var baseUrl = "http://192.168.1.144:5015";
+            var imgPath = string.IsNullOrEmpty(p.Img)
+                ? "https://via.placeholder.com/300"
+                : $"{baseUrl}/uploads/{p.Img}";
 
             return new POIDTO
             {
@@ -27,7 +32,7 @@ namespace TourGuideServer.Services
                 Longitude = p.Longitude,
                 Address = p.Address,
                 Category = p.Category,
-                ImageUrl = p.ImageUrl,   // ← thêm dòng này
+                ImageUrl = imgPath, 
 
                 Name = byLang.Select(t => t.DisplayName).FirstOrDefault()
                     ?? any.Select(t => t.DisplayName).FirstOrDefault()
@@ -37,87 +42,53 @@ namespace TourGuideServer.Services
                     ?? any.Select(t => t.ShortDescription).FirstOrDefault()
                     ?? "Không có mô tả",
 
-                Narration = byLang.Select(t => t.NarrationText).FirstOrDefault()
-                    ?? ""
+                Narration = byLang.Select(t => t.NarrationText).FirstOrDefault() ?? ""
             };
         }
 
-        // ── 1. Lấy tất cả POI theo ngôn ngữ ─────────────────────────────────
         public async Task<List<POIDTO>> GetPOIsAsync(string lang)
         {
-            if (string.IsNullOrEmpty(lang)) lang = "vi";
-
-            var pois = await _context.POIs
-                .Include(p => p.Translations)
-                .ToListAsync();
-
-            return pois.Select(p => MapToDTO(p, lang)).ToList();
+            var pois = await _context.POIs.Include(p => p.Translations).ToListAsync();
+            return pois.Select(p => MapToDTO(p, lang ?? "vi")).ToList();
         }
 
-        // ── 2. Lấy 1 POI theo ID ─────────────────────────────────────────────
-        public async Task<POIDTO?> GetPOIByIdAsync(int id, string lang)
+        public async Task<POIDTO?> GetPOIByIdAsync(string id, string lang)
         {
-            if (string.IsNullOrEmpty(lang)) lang = "vi";
-
             var poi = await _context.POIs
                 .Include(p => p.Translations)
                 .FirstOrDefaultAsync(p => p.POIID == id);
-
-            return poi == null ? null : MapToDTO(poi, lang);
+            return poi == null ? null : MapToDTO(poi, lang ?? "vi");
         }
 
-        // ── 3. Lấy POI theo QR value ──────────────────────────────────────────
-        // DB: bảng QRCode có QRValue → POIID
         public async Task<POIDTO?> GetPOIByQRAsync(string qrValue, string lang)
         {
-            if (string.IsNullOrEmpty(lang)) lang = "vi";
-
             var qr = await _context.QRCodes
-                .Include(q => q.POI)
-                    .ThenInclude(p => p!.Translations)
+                .Include(q => q.POI).ThenInclude(p => p!.Translations)
                 .FirstOrDefaultAsync(q => q.QRValue == qrValue);
-
-            if (qr?.POI == null) return null;
-
-            return MapToDTO(qr.POI, lang);
+            return qr?.POI == null ? null : MapToDTO(qr.POI, lang ?? "vi");
         }
 
-        // ── 4. Lưu lịch sử truy cập ──────────────────────────────────────────
-        public async Task SaveVisitAsync(
-            int? userId, int poiId,
-            string scanMethod,
-            decimal? userLat = null, decimal? userLon = null,
-            string? languageUsed = null)
+        public async Task SaveVisitAsync(string? userId, string poiId, string scanMethod, decimal? lat, decimal? lon, string? lang)
         {
             var history = new VisitHistory
             {
+                VisitID = Guid.NewGuid().ToString().Substring(0, 10), 
                 UserID = userId,
                 POIID = poiId,
                 VisitTime = DateTime.Now,
                 ScanMethod = scanMethod,
-                UserLat = userLat,
-                UserLon = userLon,
-                LanguageUsed = languageUsed
+                UserLat = lat,
+                UserLon = lon,
+                LanguageUsed = lang
             };
-
             _context.VisitHistories.Add(history);
             await _context.SaveChangesAsync();
         }
 
-        // ── 5. Tạo POI mới ────────────────────────────────────────────────────
-        public async Task<POI> CreatePOIAsync(POI poi)
-        {
-            _context.POIs.Add(poi);
-            await _context.SaveChangesAsync();
-            return poi;
-        }
-
-        // ── 6. Xóa POI (cascade tự xóa translations + QR) ────────────────────
-        public async Task<bool> DeletePOIAsync(int id)
+        public async Task<bool> DeletePOIAsync(string id)
         {
             var poi = await _context.POIs.FindAsync(id);
             if (poi == null) return false;
-
             _context.POIs.Remove(poi);
             await _context.SaveChangesAsync();
             return true;

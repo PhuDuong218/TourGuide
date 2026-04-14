@@ -1,24 +1,25 @@
 ﻿@{
     ViewData["Title"] = "Quản lý mã QR";
-    // Lấy URL API từ ViewBag
     string apiUrl = ViewBag.ApiUrl ?? "";
 }
 
 <div class="admin-card" style="background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 15px rgba(0,0,0,0.08);">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
         <h4 style="font-weight: 700; margin: 0;">Danh sách mã QR</h4>
-        <button class="btn" style="background: #6200EE; color: white; border-radius: 8px;">+ Tạo QR mới</button>
+        <a asp-controller="QRCode" asp-action="Create" class="btn" style="background: #6200EE; color: white; border-radius: 8px; text-decoration: none; padding: 10px 20px; font-weight: 600;">
+            + Tạo QR mới
+        </a>
     </div>
 
     <table class="table" id="qrTable" style="width: 100%; border-collapse: collapse;">
         <thead>
-            <tr style="color: #6b7280; font-size: 13px; border-bottom: 2px solid #f3f4f6;">
-                <th style="padding: 12px;">ID</th>
-                <th style="padding: 12px;">ĐỊA ĐIỂM (POI)</th>
-                <th style="padding: 12px;">GIÁ TRỊ QR</th>
-                <th style="padding: 12px;">NGÀY TẠO</th>
-                <th style="padding: 12px;">PREVIEW</th>
-                <th style="padding: 12px; text-align: center;">XÓA</th>
+            <tr style="color: #6b7280; font-size: 13px; border-bottom: 2px solid #f3f4f6; text-align: left;">
+                <th style="padding: 12px; width: 10%;">MÃ QR (QRID)</th>
+                <th style="padding: 12px; width: 25%;">ĐỊA ĐIỂM (POIID)</th>
+                <th style="padding: 12px; width: 20%;">GIÁ TRỊ QR</th>
+                <th style="padding: 12px; width: 15%;">NGÀY TẠO</th>
+                <th style="padding: 12px; width: 25%; text-align: center;">PREVIEW</th>
+                <th style="padding: 12px; width: 5%; text-align: center;">XÓA</th>
             </tr>
         </thead>
         <tbody id="qrTableBody">
@@ -33,40 +34,43 @@
 
 @section Scripts {
     <script>
-        // Lấy URL API từ C# truyền xuống
-        const API_BASE_URL = '@apiUrl';
+        const API_URL = '@ViewBag.ApiUrl';
 
         async function loadQRCodes() {
             const tbody = document.getElementById('qrTableBody');
-
             try {
-                // Gọi đến đúng port của API (ví dụ http://localhost:5015/api/QRCode)
-                const response = await fetch(`${API_BASE_URL}/api/QRCode`);
-
-                if (!response.ok) throw new Error('Không thể kết nối API');
+                const response = await fetch(`${API_URL}QRCode`);
+                if (!response.ok) throw new Error('Lỗi kết nối API: ' + response.status);
 
                 const data = await response.json();
                 tbody.innerHTML = '';
 
                 if (data.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="6" class="text-center">Chưa có dữ liệu QR</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 20px;">Database trống</td></tr>';
                     return;
                 }
 
                 data.forEach(item => {
-                    // KHỚP VỚI API: qrId, poiName, qrValue, createdAt
+                    // 1. CHUẨN HÓA BIẾN: Bắt mọi trường hợp hoa/thường từ API
+                    const qrId = item.qrid || item.qrId || item.QRID || 'N/A';
+                    const poiId = item.poiid || item.poiId || item.POIID || 'N/A';
+                    const qrValue = item.qrValue || item.QRValue || 'N/A';
+                    const createdAt = item.createdAt || item.CreatedAt;
+
                     const row = `
                         <tr style="border-bottom: 1px solid #f3f4f6;">
-                            <td style="padding: 12px; color: #9ca3af;">#${item.qrId}</td>
-                            <td style="padding: 12px; font-weight: 600;">${item.poiName}</td>
-                            <td style="padding: 12px; font-family: monospace; color: #6b7280;">${item.qrValue}</td>
-                            <td style="padding: 12px; color: #6b7280;">${new Date(item.createdAt).toLocaleDateString('vi-VN')}</td>
-                            <td style="padding: 12px;">
-                                <img src="https://api.qrserver.com/v1/create-qr-code/?size=50x50&data=${item.qrValue}"
-                                     style="width: 40px; border-radius: 4px; border: 1px solid #eee;" />
+                            <td style="padding: 12px; color: #9ca3af; vertical-align: middle; font-weight: bold;">${qrId}</td>
+                            <td style="padding: 12px; font-weight: 600; vertical-align: middle; color: #6200EE;">${poiId}</td>
+                            <td style="padding: 12px; font-family: monospace; color: #6b7280; vertical-align: middle;">${qrValue}</td>
+                            <td style="padding: 12px; color: #6b7280; vertical-align: middle;">
+                                ${createdAt ? new Date(createdAt).toLocaleDateString('vi-VN') : ''}
                             </td>
                             <td style="padding: 12px; text-align: center;">
-                                <button onclick="deleteQR(${item.qrId})" style="color: #ef4444; border: none; background: none; cursor: pointer;">
+                                <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${qrValue}"
+                                     style="width: 120px; height: 120px; border-radius: 8px; border: 1px solid #ddd; padding: 5px; background: white;" />
+                            </td>
+                            <td style="padding: 12px; text-align: center; vertical-align: middle;">
+                                <button onclick="deleteQR('${qrId}')" style="color: #ef4444; border: none; background: none; cursor: pointer; font-size: 18px;" title="Xóa QR">
                                     <i class="fa-solid fa-trash"></i>
                                 </button>
                             </td>
@@ -75,7 +79,30 @@
                     tbody.insertAdjacentHTML('beforeend', row);
                 });
             } catch (err) {
-                tbody.innerHTML = `<tr><td colspan="6" class="text-center" style="color:red; padding:20px;">Lỗi: ${err.message}</td></tr>`;
+                console.error("Lỗi fetch:", err);
+                tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:red; padding:20px;">Lỗi: ${err.message}</td></tr>`;
+            }
+        }
+
+        async function deleteQR(id) {
+
+            if (id === 'N/A' || id === 'undefined') {
+                alert("Không thể xóa! Dòng dữ liệu này đang bị mất QRID trong Database. Vui lòng nhờ Admin xóa trực tiếp bằng SQL.");
+                return;
+            }
+            if (!confirm(`Bạn có chắc chắn muốn xóa mã QR ${id} này không?`)) return;
+
+            try {
+                const response = await fetch(`${API_URL}QRCode/${id}`, { method: 'DELETE' });
+                if (response.ok) {
+                    alert("Đã xóa mã QR thành công!");
+                    loadQRCodes();
+                } else {
+                    alert("Lỗi khi xóa mã QR. HTTP Status: " + response.status);
+                }
+            } catch (err) {
+                console.error("Lỗi khi xóa:", err);
+                alert("Không thể kết nối đến Server để xóa!");
             }
         }
 

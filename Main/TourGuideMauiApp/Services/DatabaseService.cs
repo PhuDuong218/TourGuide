@@ -13,7 +13,7 @@ public class DatabaseService
     {
         _httpClient = new HttpClient
         {
-            BaseAddress = new Uri("http://192.168.247.113:5015/"),
+            BaseAddress = new Uri("https://gzm4vrwg-7054.asse.devtunnels.ms/api"),
             Timeout = TimeSpan.FromSeconds(15)
         };
         _lang = CultureInfo.CurrentCulture.TwoLetterISOLanguageName;
@@ -29,7 +29,7 @@ public class DatabaseService
         catch { return new List<POIDTO>(); }
     }
 
-    public async Task<POIDTO?> GetPOIByIdAsync(int id, string? lang = null)
+    public async Task<POIDTO?> GetPOIByIdAsync(string id, string? lang = null)
 {
     try
     {

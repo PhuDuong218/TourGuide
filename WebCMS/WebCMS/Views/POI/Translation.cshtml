@@ -12,15 +12,15 @@
 <!-- Back + Header -->
 <div class="page-header">
     <div class="page-header-left">
-        <a href="/POI" class="btn-outline-admin" style="margin-bottom:10px;display:inline-flex">
+        <a asp-controller="POI" asp-action="Index" class="btn-outline-admin" style="margin-bottom:10px;display:inline-flex">
             <i class="fa-solid fa-arrow-left"></i> Danh sách POI
         </a>
         <h1>Bản dịch — POI #@ViewBag.POIID</h1>
         <p>Quản lý nội dung thuyết minh theo từng ngôn ngữ</p>
     </div>
-    <a href="/POI/AddTranslation?poiId=@ViewBag.POIID" class="btn-primary-admin">
-        <i class="fa-solid fa-plus"></i> Thêm bản dịch
+    <a href="/POI/AddTranslation?poiId=@ViewBag.POIID" class="btn-primary-admin"> + Thêm bản dịch
     </a>
+
 </div>
 
 <!-- Language coverage -->
@@ -85,12 +85,10 @@
                         </span>
                     </td>
                     <td style="text-align:center">
-                        <a href="/POI/DeleteTranslation?poiId=@t.POIID&lang=@t.LanguageCode"
-                           class="btn-icon-admin danger"
-                           onclick="return confirm('Xóa bản dịch @t.LanguageCode.ToUpper() này?')"
-                           title="Xóa bản dịch">
+                        <a href="~/POI/DeleteTranslation?poiId=@t.POIID&lang=@t.LanguageCode" class="btn-icon-admin danger" onclick="return confirm('Xóa bản dịch @t.LanguageCode.ToUpper() này?')" title="Xóa bản dịch">
                             <i class="fa-solid fa-trash"></i>
                         </a>
+
                     </td>
                 </tr>
                                 }

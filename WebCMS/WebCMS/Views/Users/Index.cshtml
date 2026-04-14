@@ -1,202 +1,56 @@
 ﻿@{
     ViewData["Title"] = "Quản lý người dùng";
+    string apiUrl = ViewBag.ApiUrl ?? "";
 }
 
-<div class="page-header">
-    <div class="page-header-left">
-        <h1>Quản lý người dùng</h1>
-        <p>Quản lý tài khoản admin và người dùng hệ thống</p>
+<div class="admin-card" style="background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 15px rgba(0,0,0,0.08);">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h4 style="font-weight: 700; margin: 0;">Danh sách tài khoản</h4>
+        <button class="btn" style="background: #6200EE; color: white; border-radius: 8px;">+ Thêm người dùng</button>
     </div>
-    <button class="btn-primary-admin" onclick="showCreateModal()">
-        <i class="fa-solid fa-user-plus"></i> Thêm người dùng
-    </button>
-</div>
 
-<div class="admin-card">
-    <div class="admin-card-header">
-        <span class="admin-card-title">Danh sách người dùng</span>
-        <div class="search-box">
-            <i class="fa-solid fa-magnifying-glass"></i>
-            <input type="text" class="search-input" id="searchInput" placeholder="Tìm theo username, email...">
-        </div>
-    </div>
-    <div class="admin-card-body">
-        <table class="admin-table" id="userTable">
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Người dùng</th>
-                    <th>Email</th>
-                    <th>Vai trò</th>
-                    <th style="width:120px;text-align:center">Thao tác</th>
-                </tr>
-            </thead>
-            <tbody id="userBody">
-                <tr>
-                    <td colspan="5" style="text-align:center;padding:40px;color:var(--text-muted)">
-                        <i class="fa-solid fa-spinner fa-spin"></i> Đang tải...
-                    </td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
-</div>
-
-<!-- Create Modal -->
-<div id="createModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;align-items:center;justify-content:center">
-    <div style="background:white;border-radius:16px;padding:32px;width:480px;max-width:90vw">
-        <h3 style="font-size:16px;font-weight:800;margin-bottom:20px" id="modalTitle">Thêm người dùng mới</h3>
-        <input type="hidden" id="editUserId">
-        <div class="form-group">
-            <label class="form-label-admin">Username</label>
-            <input type="text" id="inpUsername" class="form-control-admin" placeholder="admin">
-        </div>
-        <div class="form-group">
-            <label class="form-label-admin">Họ tên</label>
-            <input type="text" id="inpFullName" class="form-control-admin" placeholder="Nguyễn Văn A">
-        </div>
-        <div class="form-group">
-            <label class="form-label-admin">Email</label>
-            <input type="email" id="inpEmail" class="form-control-admin" placeholder="email@example.com">
-        </div>
-        <div class="form-group">
-            <label class="form-label-admin">Mật khẩu <span id="pwHint" style="font-weight:400;text-transform:none;letter-spacing:0">(để trống = không đổi)</span></label>
-            <input type="password" id="inpPassword" class="form-control-admin" placeholder="••••••">
-        </div>
-        <div class="form-group">
-            <label class="form-label-admin">Vai trò</label>
-            <select id="inpRole" class="form-control-admin">
-                <option value="admin">Admin</option>
-                <option value="owner">Owner (Chủ địa điểm)</option>
-                <option value="user">User (Người dùng)</option>
-            </select>
-        </div>
-        <div class="form-actions">
-            <button class="btn-primary-admin" onclick="saveUser()">
-                <i class="fa-solid fa-floppy-disk"></i> Lưu
-            </button>
-            <button class="btn-outline-admin" onclick="hideModal()">Hủy</button>
-        </div>
-    </div>
+    <table class="table" id="userTable" style="width: 100%; border-collapse: collapse;">
+        <thead>
+            <tr style="color: #6b7280; font-size: 13px; border-bottom: 2px solid #f3f4f6;">
+                <th style="padding: 12px;">ID</th>
+                <th style="padding: 12px;">TÀI KHOẢN</th>
+                <th style="padding: 12px;">EMAIL</th>
+                <th style="padding: 12px;">VAI TRÒ</th>
+                <th style="padding: 12px;">NGÀY TẠO</th>
+                <th style="padding: 12px; text-align: center;">THAO TÁC</th>
+            </tr>
+        </thead>
+        <tbody id="userTableBody">
+            <tr><td colspan="6" class="text-center" style="padding:40px;">Đang tải...</td></tr>
+        </tbody>
+    </table>
 </div>
 
 @section Scripts {
     <script>
-        const API = '';
-        const roleColors = { admin:'badge-purple', owner:'badge-amber', user:'badge-gray' };
-        const roleLabels = { admin:'Admin', owner:'Owner', user:'User' };
-
         async function loadUsers() {
-            const res   = await fetch(`${API}/api/User`);
-            const users = await res.json();
-
-            document.getElementById('userBody').innerHTML = users.length
-                ? users.map(u => `<tr>
-                    <td><span class="table-id">#${u.userID}</span></td>
-                    <td>
-                        <div style="display:flex;align-items:center;gap:10px">
-                            <div class="user-avatar" style="width:32px;height:32px;font-size:13px">
-                                ${u.username[0].toUpperCase()}
-                            </div>
-                            <div>
-                                <div style="font-weight:600">${u.username}</div>
-                                <div style="font-size:12px;color:var(--text-muted)">${u.fullName}</div>
-                            </div>
-                        </div>
-                    </td>
-                    <td style="color:var(--text-muted)">${u.email}</td>
-                    <td>
-                        <span class="badge-category ${roleColors[u.role]||'badge-gray'}">
-                            ${roleLabels[u.role]||u.role}
-                        </span>
-                    </td>
-                    <td style="text-align:center">
-                        <div style="display:flex;gap:6px;justify-content:center">
-                            <button class="btn-icon-admin info" onclick="editUser(${u.userID},'${u.username}','${u.fullName}','${u.email}','${u.role}')" title="Sửa">
-                                <i class="fa-solid fa-pen"></i>
-                            </button>
-                            <button class="btn-icon-admin danger" onclick="deleteUser(${u.userID},'${u.username}')" title="Xóa">
-                                <i class="fa-solid fa-trash"></i>
-                            </button>
-                        </div>
-                    </td>
-                </tr>`).join('')
-                : '<tr><td colspan="5" style="text-align:center;padding:40px;color:var(--text-muted)">Không có dữ liệu</td></tr>';
-        }
-
-        function showCreateModal() {
-            document.getElementById('modalTitle').textContent = 'Thêm người dùng mới';
-            document.getElementById('editUserId').value = '';
-            document.getElementById('inpUsername').disabled = false;
-            document.getElementById('pwHint').style.display = 'none';
-            ['inpUsername','inpFullName','inpEmail','inpPassword'].forEach(id => document.getElementById(id).value = '');
-            document.getElementById('inpRole').value = 'user';
-            document.getElementById('createModal').style.display = 'flex';
-        }
-
-        function editUser(id, username, fullName, email, role) {
-            document.getElementById('modalTitle').textContent = `Sửa người dùng: ${username}`;
-            document.getElementById('editUserId').value   = id;
-            document.getElementById('inpUsername').value  = username;
-            document.getElementById('inpUsername').disabled = true;
-            document.getElementById('inpFullName').value  = fullName;
-            document.getElementById('inpEmail').value     = email;
-            document.getElementById('inpRole').value      = role;
-            document.getElementById('inpPassword').value  = '';
-            document.getElementById('pwHint').style.display = 'inline';
-            document.getElementById('createModal').style.display = 'flex';
-        }
-
-        function hideModal() {
-            document.getElementById('createModal').style.display = 'none';
-        }
-
-        async function saveUser() {
-            const id       = document.getElementById('editUserId').value;
-            const username = document.getElementById('inpUsername').value.trim();
-            const fullName = document.getElementById('inpFullName').value.trim();
-            const email    = document.getElementById('inpEmail').value.trim();
-            const password = document.getElementById('inpPassword').value;
-            const role     = document.getElementById('inpRole').value;
-
-            if (!fullName || !email) return alert('Vui lòng nhập đầy đủ họ tên và email.');
-
-            let res;
-            if (id) {
-                res = await fetch(`${API}/api/User/${id}`, {
-                    method: 'PUT',
-                    headers: {'Content-Type':'application/json'},
-                    body: JSON.stringify({ email, fullName, role, password: password || undefined })
+            const tbody = document.getElementById('userTableBody');
+            try {
+                const response = await fetch('@apiUrl' + 'User');
+                const data = await response.json();
+                tbody.innerHTML = '';
+                data.forEach(u => {
+                    const row = `
+                        <tr style="border-bottom: 1px solid #f3f4f6;">
+                            <td style="padding: 12px;">#${u.userId || u.id}</td>
+                            <td style="padding: 12px; font-weight: 600;">${u.username}</td>
+                            <td style="padding: 12px;">${u.email}</td>
+                            <td style="padding: 12px;"><span class="badge bg-light text-dark">${u.role || 'User'}</span></td>
+                            <td style="padding: 12px;">${new Date(u.createdAt).toLocaleDateString()}</td>
+                            <td style="padding: 12px; text-align: center;">
+                                <i class="fa-solid fa-pen-to-square" style="color:#3b82f6; cursor:pointer; margin-right:10px;"></i>
+                                <i class="fa-solid fa-trash" style="color:#ef4444; cursor:pointer;"></i>
+                            </td>
+                        </tr>`;
+                    tbody.insertAdjacentHTML('beforeend', row);
                 });
-            } else {
-                if (!username || !password) return alert('Username và mật khẩu không được để trống.');
-                res = await fetch(`${API}/api/User`, {
-                    method: 'POST',
-                    headers: {'Content-Type':'application/json'},
-                    body: JSON.stringify({ username, email, password, fullName, role })
-                });
-            }
-
-            if (res.ok) { hideModal(); loadUsers(); }
-            else {
-                const err = await res.json();
-                alert(err.message || 'Lỗi lưu người dùng');
-            }
+            } catch (e) { tbody.innerHTML = '<tr><td colspan="6" class="text-center" style="color:red;">Lỗi kết nối API</td></tr>'; }
         }
-
-        async function deleteUser(id, username) {
-            if (!confirm(`Xóa tài khoản "${username}"?`)) return;
-            await fetch(`${API}/api/User/${id}`, { method: 'DELETE' });
-            loadUsers();
-        }
-
-        document.getElementById('searchInput')?.addEventListener('input', function() {
-            const q = this.value.toLowerCase();
-            document.querySelectorAll('#userTable tbody tr').forEach(row => {
-                row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none';
-            });
-        });
-
-        loadUsers();
+        document.addEventListener('DOMContentLoaded', loadUsers);
     </script>
 }

@@ -5,7 +5,7 @@ namespace TourGuideMauiApp.Services;
 public class GeofenceService
 {
     private readonly double _thresholdMeters = 50.0; // Khoảng cách kích hoạt (50m)
-    private readonly HashSet<int> _triggeredPois = new(); // Lưu các POI đã thuyết minh để tránh lặp
+    private readonly HashSet<string> _triggeredPois = new(); // Lưu các POI đã thuyết minh để tránh lặp
     private List<POIDTO> _pois = new();
 
     public event Action<POIDTO>? OnGeofenceTriggered;

@@ -16,7 +16,6 @@ namespace TourGuideServer.Controllers
             _context = context;
         }
 
-        // GET /api/QRCode — lấy tất cả QR kèm thông tin POI
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
@@ -34,9 +33,8 @@ namespace TourGuideServer.Controllers
             return Ok(qrs);
         }
 
-        // GET /api/QRCode/{id}
-        [HttpGet("{id:int}")]
-        public async Task<IActionResult> GetById(int id)
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetById(string id)
         {
             var qr = await _context.QRCodes
                 .Include(q => q.POI)
@@ -45,9 +43,8 @@ namespace TourGuideServer.Controllers
             return Ok(qr);
         }
 
-        // GET /api/QRCode/poi/{poiId} — lấy QR theo POI
-        [HttpGet("poi/{poiId:int}")]
-        public async Task<IActionResult> GetByPOI(int poiId)
+        [HttpGet("poi/{poiId}")]
+        public async Task<IActionResult> GetByPOI(string poiId)
         {
             var qrs = await _context.QRCodes
                 .Where(q => q.POIID == poiId)
@@ -55,36 +52,40 @@ namespace TourGuideServer.Controllers
             return Ok(qrs);
         }
 
-        // POST /api/QRCode — tạo QR mới
-        // Body: { "poiId": 1, "qrValue": "QR_PHOHOA_001" }
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] CreateQRRequest req)
         {
-            // Kiểm tra POI tồn tại
-            var poi = await _context.POIs.FindAsync(req.PoiId);
-            if (poi == null)
-                return NotFound(new { message = $"Không tìm thấy POI = {req.PoiId}" });
+            if (string.IsNullOrEmpty(req.POIID) || string.IsNullOrEmpty(req.QRValue))
+            {
+                return BadRequest(new { message = "Thiếu dữ liệu POIID hoặc QRValue" });
+            }
 
-            // Kiểm tra QRValue trùng
-            var exists = await _context.QRCodes.AnyAsync(q => q.QRValue == req.QrValue);
+            var poi = await _context.POIs.FindAsync(req.POIID);
+            if (poi == null)
+                return NotFound(new { message = $"Không tìm thấy địa điểm có POIID = {req.POIID}" });
+
+            var exists = await _context.QRCodes.AnyAsync(q => q.QRValue == req.QRValue);
             if (exists)
-                return Conflict(new { message = $"Mã QR '{req.QrValue}' đã tồn tại." });
+                return Conflict(new { message = $"Mã QR '{req.QRValue}' đã tồn tại." });
+
+            string newQrId = !string.IsNullOrEmpty(req.QRID) ? req.QRID : "Q" + new Random().Next(100, 999).ToString();
 
             var qr = new QRCode
             {
-                POIID = req.PoiId,
-                QRValue = req.QrValue,
+                QRID = newQrId,
+                POIID = req.POIID,
+                QRValue = req.QRValue,
                 CreatedAt = DateTime.Now
             };
 
             _context.QRCodes.Add(qr);
             await _context.SaveChangesAsync();
-            return CreatedAtAction(nameof(GetById), new { id = qr.QRID }, qr);
+
+            return Ok(new { message = "Tạo mã QR thành công!", data = qr });
         }
 
-        // DELETE /api/QRCode/{id}
-        [HttpDelete("{id:int}")]
-        public async Task<IActionResult> Delete(int id)
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> Delete(string id)
         {
             var qr = await _context.QRCodes.FindAsync(id);
             if (qr == null) return NotFound();
@@ -95,9 +96,11 @@ namespace TourGuideServer.Controllers
         }
     }
 
+    //  Chỉ giữ lại 1 bản duy nhất viết HOA khớp với Database
     public class CreateQRRequest
     {
-        public int PoiId { get; set; }
-        public string QrValue { get; set; } = string.Empty;
+        public string? QRID { get; set; }
+        public string POIID { get; set; } = string.Empty;
+        public string QRValue { get; set; } = string.Empty;
     }
 }

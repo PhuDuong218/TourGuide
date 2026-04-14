@@ -145,8 +145,8 @@ namespace TourGuideServer.Controllers
         }
 
         // GET /api/VisitHistory/poi/{poiId}
-        [HttpGet("poi/{poiId:int}")]
-        public async Task<IActionResult> GetByPOI(int poiId)
+        [HttpGet("poi/{poiId}")]
+        public async Task<IActionResult> GetByPOI(string poiId)
         {
             var visits = await _context.VisitHistories
                 .Where(v => v.POIID == poiId)

@@ -1,6 +1,6 @@
 ﻿@model WebCMS.Models.POI
 @{
-    ViewData["Title"] = "Thêm POI mới";
+    ViewData["Title"] = "Sửa địa điểm";
 }
 
 <div style="max-width:760px">
@@ -11,11 +11,17 @@
 
     <div class="form-card">
         <div style="margin-bottom:28px">
-            <h2 style="font-size:18px;font-weight:800;color:var(--text)">Thêm địa điểm mới</h2>
-            <p style="font-size:13px;color:var(--text-muted);margin-top:4px">Điền thông tin cơ bản. Nội dung thuyết minh sẽ thêm sau ở mục Bản dịch.</p>
+            <h2 style="font-size:18px;font-weight:800;color:var(--text)">Sửa địa điểm</h2>
+            <p style="font-size:13px;color:var(--text-muted);margin-top:4px">
+                Cập nhật thông tin địa điểm <strong>@Model.Name</strong>.
+                Để trống phần ảnh nếu không muốn thay đổi ảnh hiện tại.
+            </p>
         </div>
 
-        <form asp-action="Create" method="post" enctype="multipart/form-data">
+        <form asp-action="Edit" asp-route-id="@Model.POIID" method="post" enctype="multipart/form-data">
+
+            <!-- Giữ tên file ảnh cũ nếu không upload mới -->
+            <input type="hidden" asp-for="Img" />
 
             <div class="form-group">
                 <label class="form-label-admin">Tên địa điểm *</label>
@@ -44,16 +50,12 @@
                 <div class="form-group">
                     <label class="form-label-admin">Vĩ độ (Latitude) *</label>
                     <input asp-for="Latitude" type="number" step="0.000001"
-                           class="form-control-admin" placeholder="VD: 15.877600"
-                           id="latInput" required />
-                    <div class="form-hint">Khoảng 15.870 – 15.885 (Hội An)</div>
+                           class="form-control-admin" required />
                 </div>
                 <div class="form-group">
                     <label class="form-label-admin">Kinh độ (Longitude) *</label>
                     <input asp-for="Longitude" type="number" step="0.000001"
-                           class="form-control-admin" placeholder="VD: 108.327000"
-                           id="lngInput" required />
-                    <div class="form-hint">Khoảng 108.320 – 108.340 (Hội An)</div>
+                           class="form-control-admin" required />
                 </div>
             </div>
 
@@ -62,46 +64,72 @@
                 <input asp-for="Description" class="form-control-admin" placeholder="VD: 1 Nguyễn Thị Minh Khai, Hội An" />
             </div>
 
+            <!-- Ảnh hiện tại -->
             <div class="form-group">
-                <label class="form-label-admin">Hình ảnh địa điểm *</label>
-                <input type="file" name="ImageFile" class="form-control-admin" id="imageInput" accept="image/*" required />
+                <label class="form-label-admin">Ảnh hiện tại</label>
+                @if (!string.IsNullOrEmpty(Model.Img))
+                {
+                    <div style="margin-bottom:10px">
+                        <img src="/uploads/@Model.Img" alt="@Model.Name"
+                             style="height:120px;border-radius:8px;border:1px solid var(--border);object-fit:cover" />
+                        <div style="font-size:12px;color:var(--text-muted);margin-top:4px">
+                            <i class="fa-solid fa-file-image"></i> @Model.Img
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <div style="margin-bottom:10px;color:var(--text-muted);font-size:13px">
+                        <i class="fa-solid fa-image"></i> Chưa có ảnh
+                    </div>
+                }
+
+                <label class="form-label-admin">Thay ảnh mới (không bắt buộc)</label>
+                <input type="file" name="imageFile" class="form-control-admin"
+                       id="imageInput" accept="image/*" />
+                <div class="form-hint">Chọn file mới để thay ảnh. Bỏ trống để giữ ảnh cũ.</div>
 
                 <div id="imagePreview" style="margin-top:10px;display:none">
                     <img id="previewImg" src="" alt="Preview"
-                         style="height:120px; border-radius:8px; border:1px solid var(--border); object-fit:cover" />
+                         style="height:120px;border-radius:8px;border:1px solid var(--border);object-fit:cover" />
+                    <div style="font-size:12px;color:#22c55e;margin-top:4px">
+                        <i class="fa-solid fa-check"></i> Ảnh mới sẽ được lưu khi bấm Cập nhật
+                    </div>
                 </div>
             </div>
 
             <div class="form-group">
                 <label class="form-label-admin">Bán kính geofence (m)</label>
                 <input asp-for="Radius" type="number" class="form-control-admin"
-                       placeholder="50" value="50" min="10" max="500" />
+                       min="10" max="500" />
                 <div class="form-hint">Phạm vi kích hoạt thuyết minh khi khách đến gần. Mặc định 50m.</div>
             </div>
 
             <div class="form-actions">
                 <button type="submit" class="btn-primary-admin">
-                    <i class="fa-solid fa-floppy-disk"></i> Lưu địa điểm
+                    <i class="fa-solid fa-floppy-disk"></i> Cập nhật
                 </button>
                 <a asp-controller="POI" asp-action="Index" class="btn-outline-admin">Hủy</a>
             </div>
         </form>
     </div>
 </div>
+
 @section Scripts {
     <script>
-        document.getElementById('imageInput').addEventListener('change', function(e) {
+        document.getElementById('imageInput').addEventListener('change', function (e) {
             const file = e.target.files[0];
             const preview = document.getElementById('imagePreview');
             const img = document.getElementById('previewImg');
-
             if (file) {
                 const reader = new FileReader();
-                reader.onload = function(e) {
+                reader.onload = function (e) {
                     img.src = e.target.result;
                     preview.style.display = 'block';
-                }
+                };
                 reader.readAsDataURL(file);
+            } else {
+                preview.style.display = 'none';
             }
         });
     </script>

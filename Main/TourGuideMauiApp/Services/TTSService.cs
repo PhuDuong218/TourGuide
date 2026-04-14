@@ -27,7 +27,7 @@ public class TTSService
         _cts?.Cancel();
         try
         {
-            await TextToSpeech.Default.SpeakAsync(string.Empty); // Workaround to stop
+            await TextToSpeech.Default.SpeakAsync(string.Empty); 
         }
         catch { }
     }

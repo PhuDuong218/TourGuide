@@ -96,7 +96,7 @@
                         BackgroundColor="#F0EEFF">
                     <Grid IsClippedToBounds="True">
                         <Label x:Name="imgPlaceholder"
-                               Text="🏛" FontSize="52"
+                               Text="" FontSize="52"
                                HorizontalOptions="Center"
                                VerticalOptions="Center"/>
                         <Image x:Name="poiImage"

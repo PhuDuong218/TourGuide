@@ -2,16 +2,15 @@
 {
     public class VisitHistory
     {
-        public int VisitID { get; set; }        
-        public int? UserID { get; set; }        
-        public int POIID { get; set; }
+        public string VisitID { get; set; } = string.Empty; 
+        public string? UserID { get; set; }                
+        public string POIID { get; set; } = string.Empty; 
         public DateTime VisitTime { get; set; } = DateTime.Now;
-        public string? ScanMethod { get; set; }          // 'GPS_Trigger' | 'QR_Scan'
-        public decimal? UserLat { get; set; }          // Tọa độ thực tế của khách
+        public string? ScanMethod { get; set; }
+        public decimal? UserLat { get; set; }
         public decimal? UserLon { get; set; }
-        public string? LanguageUsed { get; set; }          // 'vi', 'en', ...
+        public string? LanguageUsed { get; set; }
 
-        // Navigation
         public POI? POI { get; set; }
         public User? User { get; set; }
     }

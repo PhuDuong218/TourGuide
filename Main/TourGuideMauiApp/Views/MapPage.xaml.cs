@@ -51,24 +51,24 @@ public partial class MapPage : ContentPage
         base.OnAppearing();
         InitMapIfNeeded();
 
-        // Tải POI nếu chưa có hoặc cần làm mới
-        if (_allPois.Count == 0)
+        if (_allPois == null || _allPois.Count == 0)
         {
             await LoadPoisOnMap();
         }
 
-        // Đợi một chút để MapControl ổn định layout
         await Task.Delay(300);
 
-        // Kiểm tra nếu có POI được truyền từ trang quét QR hoặc danh sách
-        if (!string.IsNullOrEmpty(SelectedPoiId) && int.TryParse(SelectedPoiId, out int id))
+        if (!string.IsNullOrEmpty(SelectedPoiId))
         {
+            // Vì POIID trong SQL là NVARCHAR (string), nên không cần parse sang int
+            string id = SelectedPoiId;
             System.Diagnostics.Debug.WriteLine($"[MapPage] Đang focus vào POI ID: {id}");
-            var poi = _allPois.FirstOrDefault(p => p.POIID == id);
+
+            var poi = _allPois?.FirstOrDefault(p => p.POIID == id);
             if (poi != null)
             {
                 await FocusOnPoi(poi);
-                SelectedPoiId = null; // Xóa ID sau khi đã xử lý
+                SelectedPoiId = null;
             }
         }
         else if (_lastLocation == null)
@@ -212,7 +212,7 @@ public partial class MapPage : ContentPage
         }
     }
 
-    private async Task ShowPoiDetails(POIDTO poi)
+    private async Task ShowPoiDetails(POIDTO poi, string langCode = "VI")
     {
         await StopAudio();
 
@@ -221,15 +221,17 @@ public partial class MapPage : ContentPage
             ? poi.Description
             : poi.Narration;
 
+        // ─── Ánh xạ các thành phần UI ───
         var nameLabel = this.FindByName<Label>("poiName");
         var descLabel = this.FindByName<Label>("poiDescription");
         var addrLabel = this.FindByName<Label>("poiAddress");
         var distLabel = this.FindByName<Label>("poiDistance");
-        var image = this.FindByName<MauiImage>("poiImage");
+        var image = this.FindByName<Microsoft.Maui.Controls.Image>("poiImage");
         var placeholder = this.FindByName<Label>("imgPlaceholder");
         var icon = this.FindByName<Label>("playPauseIcon");
         var sheet = this.FindByName<Border>("poiBottomSheet");
 
+        // ─── Gán thông tin văn bản ───
         if (nameLabel != null) nameLabel.Text = poi.Name;
         if (descLabel != null) descLabel.Text = poi.Description;
 
@@ -246,13 +248,13 @@ public partial class MapPage : ContentPage
             }
         }
 
-        // Hiển thị khoảng cách
+        // ─── Tính toán và hiển thị khoảng cách ───
         if (distLabel != null && _lastLocation != null && poi.Latitude != 0)
         {
             double distance = Location.CalculateDistance(
                 _lastLocation.Latitude, _lastLocation.Longitude,
                 poi.Latitude, poi.Longitude,
-                DistanceUnits.Kilometers) * 1000; // Đổi sang mét
+                DistanceUnits.Kilometers) * 1000;
 
             distLabel.Text = $"📏 Cách bạn: {Math.Round(distance)}m";
             distLabel.IsVisible = true;
@@ -262,11 +264,16 @@ public partial class MapPage : ContentPage
             distLabel.IsVisible = false;
         }
 
+        // ─── XỬ LÝ HIỂN THỊ ẢNH (Dùng Img) ───
         if (image != null && placeholder != null)
         {
-            if (!string.IsNullOrEmpty(poi.ImageUrl))
+            if (!string.IsNullOrEmpty(poi.Img))
             {
-                image.Source = ImageSource.FromUri(new Uri(poi.ImageUrl));
+      
+                string baseAddress = "https://gzm4vrwg-7054.asse.devtunnels.ms/api";
+                string finalUrl = $"{baseAddress}uploads/{poi.Img}";
+
+                image.Source = ImageSource.FromUri(new Uri(finalUrl));
                 image.IsVisible = true;
                 placeholder.IsVisible = false;
             }
@@ -274,14 +281,17 @@ public partial class MapPage : ContentPage
             {
                 image.IsVisible = false;
                 placeholder.IsVisible = true;
+                placeholder.Text = "🏛";
             }
         }
 
+        // ─── Trạng thái Audio ───
         if (icon != null) icon.Text = "▶";
         _isPlaying = false;
 
-        UpdateLanguageUI("VI");
+        UpdateLanguageUI(langCode.ToUpper());
 
+        // ─── Hiệu ứng mở Bottom Sheet ───
         if (sheet != null)
         {
             sheet.IsVisible = true;
@@ -313,31 +323,6 @@ public partial class MapPage : ContentPage
     private async void OnRefreshMapClicked(object sender, EventArgs e) => await LoadPoisOnMap();
     private async void OnMyLocationClicked(object sender, EventArgs e) => await ZoomToMyLocation();
 
-    // ─── VẼ ICON GHIM PHẲNG (GIỐNG HÌNH BẠN GỬI) ───────────────────────────
-    private static byte[] CreatePinBitmap(SkiaSharp.SKColor bodyColor)
-    {
-        const int W = 80, H = 100;
-        using var surface = SKSurface.Create(new SKImageInfo(W, H, SKColorType.Rgba8888));
-        var canvas = surface.Canvas;
-        canvas.Clear(SKColors.Transparent);
-
-        using var paint = new SKPaint { IsAntialias = true, Color = bodyColor, Style = SKPaintStyle.Fill };
-        float cx = W / 2f;
-        float r = W / 2.5f;
-
-        using var path = new SKPath();
-        path.MoveTo(cx, H - 5);
-        path.ArcTo(new SKRect(cx - r, 5, cx + r, 5 + 2 * r), 135, 270, false);
-        path.Close();
-        canvas.DrawPath(path, paint);
-
-        using var whitePaint = new SKPaint { IsAntialias = true, Color = SKColors.White, Style = SKPaintStyle.Fill };
-        canvas.DrawCircle(cx, r + 5, r * 0.4f, whitePaint);
-
-        using var image = surface.Snapshot();
-        using var data = image.Encode(SKEncodedImageFormat.Png, 100);
-        return data.ToArray();
-    }
 
     private static List<IStyle> CreatePinStyle(Mapsui.Styles.Color pinColor, string labelText = "")
     {
@@ -406,7 +391,7 @@ public partial class MapPage : ContentPage
                 feature["Description"] = poi.Description;
                 feature["Narration"] = poi.Narration;
                 feature["Address"] = poi.Address ?? "";
-                feature["ImageUrl"] = poi.ImageUrl ?? "";
+                feature["Img"] = poi.Img ?? "";
                 feature["Latitude"] = poi.Latitude;
                 feature["Longitude"] = poi.Longitude;
 
@@ -482,12 +467,15 @@ public partial class MapPage : ContentPage
 
         var poi = new POIDTO
         {
-            POIID = feature["POIID"] is int id ? id : 0,
+            POIID = feature["POIID"]?.ToString() ?? "",
             Name = feature["Name"]?.ToString() ?? "",
             Description = feature["Description"]?.ToString() ?? "",
             Narration = feature["Narration"]?.ToString() ?? "",
             Address = feature["Address"]?.ToString(),
-            ImageUrl = feature["ImageUrl"]?.ToString(),
+
+            // SỬA TẠI ĐÂY: Gán vào Img thay vì ImageUrl
+            Img = feature["Img"]?.ToString(),
+
             Latitude = feature["Latitude"] is double lat ? lat : 0,
             Longitude = feature["Longitude"] is double lon ? lon : 0
         };
@@ -514,21 +502,7 @@ public partial class MapPage : ContentPage
 
             if (updatedPoi != null)
             {
-                await StopAudio();
-
-                _currentPOI = updatedPoi;
-                _currentNarration = string.IsNullOrEmpty(updatedPoi.Narration)
-                                    ? updatedPoi.Description
-                                    : updatedPoi.Narration;
-
-                var nameLabel = this.FindByName<Label>("poiName");
-                var descLabel = this.FindByName<Label>("poiDescription");
-                var addrLabel = this.FindByName<Label>("poiAddress");
-
-                if (nameLabel != null) nameLabel.Text = updatedPoi.Name;
-                if (descLabel != null) descLabel.Text = updatedPoi.Description;
-                if (addrLabel != null && !string.IsNullOrEmpty(updatedPoi.Address))
-                    addrLabel.Text = "📍 " + updatedPoi.Address;
+                await ShowPoiDetails(updatedPoi, langCode);
             }
         }
         catch (Exception ex)

@@ -9,28 +9,32 @@ var builder = WebApplication.CreateBuilder(args);
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
     ?? "Server=.;Database=TourGuideDB;Trusted_Connection=True;TrustServerCertificate=True;";
 
-// 2. DbContext
+// 2. Cấu hình DbContext
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(connectionString));
 
 // 3. Đăng ký các Services
 builder.Services.AddScoped<POIService>();
 
-// 4. Cấu hình Controllers và JSON (QUAN TRỌNG ĐỂ JAVASCRIPT ĐỌC ĐƯỢC)
+// 4. Cấu hình Controllers và JSON (QUAN TRỌNG)
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
-        // Đảm bảo tên biến trả về kiểu camelCase (ví dụ: qrId, poiName...)
+        // 🔥 Đảm bảo trả về camelCase (poiId, name...) để App MAUI dễ đọc
         options.JsonSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
-        // Tránh lỗi vòng lặp dữ liệu (Circular Reference)
+
+        // 🔥 Bỏ qua lỗi vòng lặp khi dùng .Include() trong POIController
         options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
+
+        // Cho phép đọc số từ chuỗi nếu cần
+        options.JsonSerializerOptions.NumberHandling = JsonNumberHandling.AllowReadingFromString;
     });
 
-// 5. CORS — Cho phép Web Admin (localhost:5016) gọi API
+// 5. CORS — Cho phép tất cả các nguồn gọi API
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", policy =>
-        policy.AllowAnyOrigin() // Cho phép tất cả các nguồn (Localhost 5016, Mobile...)
+        policy.AllowAnyOrigin()
               .AllowAnyMethod()
               .AllowAnyHeader());
 });
@@ -41,17 +45,18 @@ builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
-// 7. Middleware
+// 7. Cấu hình Pipeline xử lý
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
-// Tắt HttpsRedirection nếu bạn đang chạy HTTP ở Local để tránh lỗi SSL
-// app.UseHttpsRedirection();
+// 🔥 QUAN TRỌNG: Thứ tự các Middleware này không được sai
+app.UseStaticFiles();
+app.UseRouting();
 
-// 🔥 QUAN TRỌNG: UseCors phải nằm TRƯỚC MapControllers
+// Bật CORS trước khi Map Controllers
 app.UseCors("AllowAll");
 
 app.UseAuthorization();

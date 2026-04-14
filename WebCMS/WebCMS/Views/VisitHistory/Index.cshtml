@@ -1,187 +1,46 @@
 ﻿@{
     ViewData["Title"] = "Lịch sử truy cập";
+    string apiUrl = ViewBag.ApiUrl ?? "";
 }
 
-<!-- Stats -->
-<div class="stats-row" style="margin-bottom:24px">
-    <div class="stat-card">
-        <div class="stat-icon purple"><i class="fa-solid fa-eye"></i></div>
-        <div>
-            <div class="stat-label">Tổng lượt xem</div>
-            <div class="stat-value" id="statTotal">–</div>
-        </div>
-    </div>
-    <div class="stat-card">
-        <div class="stat-icon green"><i class="fa-solid fa-location-crosshairs"></i></div>
-        <div>
-            <div class="stat-label">Qua GPS</div>
-            <div class="stat-value" id="statGPS">–</div>
-        </div>
-    </div>
-    <div class="stat-card">
-        <div class="stat-icon blue"><i class="fa-solid fa-qrcode"></i></div>
-        <div>
-            <div class="stat-label">Qua QR Scan</div>
-            <div class="stat-value" id="statQR">–</div>
-        </div>
-    </div>
-    <div class="stat-card">
-        <div class="stat-icon amber"><i class="fa-solid fa-users"></i></div>
-        <div>
-            <div class="stat-label">Khách ẩn danh</div>
-            <div class="stat-value" id="statAnon">–</div>
-        </div>
-    </div>
-</div>
+<div class="admin-card" style="background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 15px rgba(0,0,0,0.08);">
+    <h4 style="font-weight: 700; margin-bottom: 20px;">Nhật ký quét mã QR</h4>
 
-<!-- Top POIs -->
-<div class="admin-card" style="margin-bottom:24px">
-    <div class="admin-card-header">
-        <span class="admin-card-title">Địa điểm phổ biến nhất</span>
-    </div>
-    <div class="admin-card-body" id="statsBody">
-        <div style="padding:32px;text-align:center;color:var(--text-muted)">
-            <i class="fa-solid fa-spinner fa-spin"></i> Đang tải...
-        </div>
-    </div>
-</div>
-
-<!-- Visit Log -->
-<div class="admin-card">
-    <div class="admin-card-header">
-        <span class="admin-card-title">Nhật ký truy cập (100 gần nhất)</span>
-        <div class="toolbar">
-            <div class="search-box">
-                <i class="fa-solid fa-magnifying-glass"></i>
-                <input type="text" class="search-input" id="searchInput" placeholder="Tìm theo POI, ngôn ngữ...">
-            </div>
-            <select id="filterMethod" class="search-input" style="max-width:160px">
-                <option value="">Tất cả phương thức</option>
-                <option value="GPS_Trigger">GPS Trigger</option>
-                <option value="QR_Scan">QR Scan</option>
-            </select>
-        </div>
-    </div>
-    <div class="admin-card-body">
-        <table class="admin-table" id="visitTable">
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Thời gian</th>
-                    <th>Địa điểm</th>
-                    <th>Người dùng</th>
-                    <th>Phương thức</th>
-                    <th>Ngôn ngữ</th>
-                    <th>Tọa độ</th>
-                </tr>
-            </thead>
-            <tbody id="visitBody">
-                <tr>
-                    <td colspan="7" style="text-align:center;padding:40px;color:var(--text-muted)">
-                        <i class="fa-solid fa-spinner fa-spin"></i> Đang tải...
-                    </td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
+    <table class="table" id="historyTable" style="width: 100%; border-collapse: collapse;">
+        <thead>
+            <tr style="color: #6b7280; font-size: 13px; border-bottom: 2px solid #f3f4f6;">
+                <th style="padding: 12px;">THỜI GIAN</th>
+                <th style="padding: 12px;">ĐỊA ĐIỂM (POI)</th>
+                <th style="padding: 12px;">NGƯỜI DÙNG</th>
+                <th style="padding: 12px;">THIẾT BỊ</th>
+            </tr>
+        </thead>
+        <tbody id="historyTableBody">
+            <tr><td colspan="4" class="text-center" style="padding:40px;">Đang tải...</td></tr>
+        </tbody>
+    </table>
 </div>
 
 @section Scripts {
     <script>
-        const API = '';
-        let allVisits = [];
-
-        async function loadAll() {
-            const [visitRes, statsRes] = await Promise.all([
-                fetch(`${API}/api/VisitHistory?limit=100`),
-                fetch(`${API}/api/VisitHistory/stats`)
-            ]);
-            allVisits = await visitRes.json();
-            const stats = await statsRes.json();
-
-            // Summary stats
-            document.getElementById('statTotal').textContent = allVisits.length;
-            document.getElementById('statGPS').textContent   = allVisits.filter(v => v.scanMethod === 'GPS_Trigger').length;
-            document.getElementById('statQR').textContent    = allVisits.filter(v => v.scanMethod === 'QR_Scan').length;
-            document.getElementById('statAnon').textContent  = allVisits.filter(v => v.username === 'Ẩn danh').length;
-
-            // Top POIs table
-            document.getElementById('statsBody').innerHTML = `
-                <table class="admin-table">
-                    <thead><tr>
-                        <th>Địa điểm</th>
-                        <th>Tổng lượt</th>
-                        <th>GPS</th>
-                        <th>QR</th>
-                        <th>Lần cuối</th>
-                        <th>Tỷ lệ</th>
-                    </tr></thead>
-                    <tbody>
-                        ${stats.map((s, i) => {
-                            const maxTotal = stats[0]?.total || 1;
-                            const pct = Math.round(s.total / maxTotal * 100);
-                            const medals = ['🥇','🥈','🥉'];
-                            return `<tr>
-                                <td><strong>${medals[i] || ''} ${s.poiName}</strong> <span class="table-id">#${s.poiID}</span></td>
-                                <td><strong>${s.total}</strong></td>
-                                <td style="color:var(--success)">${s.byGPS}</td>
-                                <td style="color:var(--info)">${s.byQR}</td>
-                                <td style="color:var(--text-muted);font-size:12px">${new Date(s.lastVisit).toLocaleDateString('vi-VN')}</td>
-                                <td>
-                                    <div style="display:flex;align-items:center;gap:8px">
-                                        <div style="flex:1;height:6px;background:var(--border);border-radius:3px;overflow:hidden">
-                                            <div style="width:${pct}%;height:100%;background:var(--accent);border-radius:3px"></div>
-                                        </div>
-                                        <span style="font-size:12px;color:var(--text-muted);width:35px">${pct}%</span>
-                                    </div>
-                                </td>
-                            </tr>`;
-                        }).join('')}
-                    </tbody>
-                </table>`;
-
-            renderVisits(allVisits);
+        async function loadHistory() {
+            const tbody = document.getElementById('historyTableBody');
+            try {
+                const response = await fetch('@apiUrl' + 'VisitHistory');
+                const data = await response.json();
+                tbody.innerHTML = '';
+                data.forEach(h => {
+                    const row = `
+                        <tr style="border-bottom: 1px solid #f3f4f6;">
+                            <td style="padding: 12px; color: #6b7280;">${new Date(h.visitTime).toLocaleString()}</td>
+                            <td style="padding: 12px; font-weight: 600;">${h.poiName || 'Địa điểm #' + h.poiId}</td>
+                            <td style="padding: 12px;">${h.username || 'Khách vãng lai'}</td>
+                            <td style="padding: 12px;"><i class="fa-solid fa-mobile-screen-button"></i> Mobile App</td>
+                        </tr>`;
+                    tbody.insertAdjacentHTML('beforeend', row);
+                });
+            } catch (e) { tbody.innerHTML = '<tr><td colspan="4" class="text-center" style="color:red;">Lỗi kết nối API</td></tr>'; }
         }
-
-        function renderVisits(visits) {
-            const methodColors = {
-                'GPS_Trigger': 'badge-green',
-                'QR_Scan':     'badge-blue'
-            };
-            const langFlags = { vi:'🇻🇳',en:'🇬🇧',fr:'🇫🇷',ja:'🇯🇵',ko:'🇰🇷' };
-
-            document.getElementById('visitBody').innerHTML = visits.length
-                ? visits.map(v => `<tr>
-                    <td><span class="table-id">#${v.visitID}</span></td>
-                    <td style="font-size:12px;color:var(--text-muted)">
-                        ${new Date(v.visitTime).toLocaleString('vi-VN')}
-                    </td>
-                    <td><strong>${v.poiName}</strong> <span class="table-id">#${v.poiID}</span></td>
-                    <td style="color:${v.username==='Ẩn danh'?'var(--text-light)':'inherit'}">${v.username}</td>
-                    <td>
-                        <span class="badge-category ${methodColors[v.scanMethod] || 'badge-gray'}">
-                            ${v.scanMethod === 'GPS_Trigger' ? '📍' : '📷'} ${v.scanMethod || '–'}
-                        </span>
-                    </td>
-                    <td>${langFlags[v.languageUsed] ?? '🌐'} ${(v.languageUsed||'–').toUpperCase()}</td>
-                    <td class="table-coords">${v.userLat?.toFixed(4) ?? '–'}, ${v.userLon?.toFixed(4) ?? '–'}</td>
-                </tr>`).join('')
-                : '<tr><td colspan="7" style="text-align:center;padding:40px;color:var(--text-muted)">Không có dữ liệu</td></tr>';
-        }
-
-        // Filter
-        function applyFilter() {
-            const q      = document.getElementById('searchInput').value.toLowerCase();
-            const method = document.getElementById('filterMethod').value;
-            const filtered = allVisits.filter(v =>
-                (!q || `${v.poiName} ${v.username} ${v.languageUsed}`.toLowerCase().includes(q)) &&
-                (!method || v.scanMethod === method)
-            );
-            renderVisits(filtered);
-        }
-        document.getElementById('searchInput')?.addEventListener('input', applyFilter);
-        document.getElementById('filterMethod')?.addEventListener('change', applyFilter);
-
-        loadAll();
+        document.addEventListener('DOMContentLoaded', loadHistory);
     </script>
 }

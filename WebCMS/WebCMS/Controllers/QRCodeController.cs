@@ -1,17 +1,37 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 
-public class QRCodeController : Controller
+namespace WebCMS.Controllers
 {
-    private readonly IConfiguration _configuration;
-    public QRCodeController(IConfiguration configuration)
+    public class QRCodeController : Controller
     {
-        _configuration = configuration;
-    }
+        private readonly IConfiguration _configuration;
 
-    public IActionResult Index()
-    {
-        // Lấy URL API (ví dụ http://localhost:5015) truyền xuống View
-        ViewBag.ApiUrl = _configuration["ApiSettings:BaseUrl"];
-        return View();
+        public QRCodeController(IConfiguration configuration)
+        {
+            _configuration = configuration;
+        }
+
+        public IActionResult Index()
+        {
+            var apiUrl = _configuration["ApiSettings:BaseUrl"];
+
+            //  Kiểm tra nếu chưa cấu hình thì báo lỗi hoặc gán mặc định để tránh crash JS
+            if (string.IsNullOrEmpty(apiUrl))
+            {
+                ViewBag.ApiUrl = "https://gzm4vrwg-7054.asse.devtunnels.ms/api/"; // Giá trị dự phòng
+            }
+            else
+            {
+                ViewBag.ApiUrl = apiUrl;
+            }
+
+            return View();
+        }
+        public IActionResult Create()
+        {
+            var apiUrl = _configuration["ApiSettings:BaseUrl"];
+            ViewBag.ApiUrl = string.IsNullOrEmpty(apiUrl) ? "https://gzm4vrwg-7054.asse.devtunnels.ms/api/" : apiUrl;
+            return View();
+        }
     }
 }
