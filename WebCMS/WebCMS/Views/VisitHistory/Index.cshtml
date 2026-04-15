@@ -33,9 +33,9 @@
                     const row = `
                         <tr style="border-bottom: 1px solid #f3f4f6;">
                             <td style="padding: 12px; color: #6b7280;">${new Date(h.visitTime).toLocaleString()}</td>
-                            <td style="padding: 12px; font-weight: 600;">${h.poiName || 'Địa điểm #' + h.poiId}</td>
-                            <td style="padding: 12px;">${h.username || 'Khách vãng lai'}</td>
-                            <td style="padding: 12px;"><i class="fa-solid fa-mobile-screen-button"></i> Mobile App</td>
+                            <td style="padding: 12px; font-weight: 600;">${h.poiName}</td>
+                            <td style="padding: 12px;">${h.username}</td>
+                            <td style="padding: 12px;"><i class="fa-solid fa-qrcode"></i> QR Scan</td>
                         </tr>`;
                     tbody.insertAdjacentHTML('beforeend', row);
                 });

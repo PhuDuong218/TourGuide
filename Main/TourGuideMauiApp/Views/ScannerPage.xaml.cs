@@ -1,6 +1,9 @@
-﻿using ZXing.Net.Maui;
-using TourGuideMauiApp.Services;
+﻿using Mapsui.Providers.Wms;
 using TourGuideMauiApp.Models;
+using TourGuideMauiApp.Services;
+using ZXing.Net.Maui;
+using System.Text;
+using System.Text.Json;
 
 namespace TourGuideMauiApp.Views;
 
@@ -58,7 +61,6 @@ public partial class ScannerPage : ContentPage
 
         try
         {
-            // Gọi đúng endpoint /api/POI/qr/{qrValue} — khớp với bảng QRCode trong DB
             var found = await _dbService.GetPOIByQRAsync(qrValue);
 
             if (found == null)
@@ -77,14 +79,37 @@ public partial class ScannerPage : ContentPage
                 : $"{found.Description}\n📍 {found.Address}";
             resultFrame.IsVisible = true;
 
+            // --- ĐOẠN CODE GỬI LỊCH SỬ ĐÃ ĐƯỢC ĐẶT ĐÚNG CHỖ ---
+            try
+            {
+                using var client = new HttpClient();
+                var historyData = new
+                {
+                    POIID = found.POIID,
+                    UserID = "U003",
+                    ScanMethod = "QR_Scan",
+                    UserLat = found.Latitude,
+                    UserLon = found.Longitude
+                };
+
+                string jsonString = System.Text.Json.JsonSerializer.Serialize(historyData);
+                var content = new StringContent(jsonString, System.Text.Encoding.UTF8, "application/json");
+                await client.PostAsync("https://gzm4vrwg-7054.asse.devtunnels.ms/api/VisitHistory", content);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Lỗi gửi lịch sử: " + ex.Message);
+            }
+            // ---------------------------------------------------
+
             // Tự động phát thuyết minh
             var narration = string.IsNullOrEmpty(found.Narration)
                 ? found.Description : found.Narration;
 
             await _ttsService.SpeakAsync(narration);
 
-            // --- TỰ ĐỘNG CHUYỂN QUA MAP ---
-            await Task.Delay(1500); // Đợi 1.5 giây để xem thông tin
+            // Tự động chuyển qua Map
+            await Task.Delay(1500);
             await Shell.Current.GoToAsync($"//MapPage?poiId={found.POIID}");
         }
         catch (Exception ex)
