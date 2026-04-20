@@ -1,0 +1,51 @@
+﻿@model WebCMS.Models.POITranslation
+@{
+    ViewData["Title"] = "Sửa bản dịch";
+    var langFlags = new Dictionary<string, string> {
+        {"vi","🇻🇳 Tiếng Việt"},{"en","🇬🇧 English"},{"fr","🇫🇷 Français"},{"ja","🇯🇵 日本語"}
+    };
+}
+
+<div style="max-width:700px">
+    <a href="/POI/Translation/@Model.POIID" class="btn-outline-admin" style="margin-bottom:24px;display:inline-flex">
+        <i class="fa-solid fa-arrow-left"></i> Quay lại bản dịch
+    </a>
+
+    <div class="form-card">
+        <div style="margin-bottom:28px">
+            <h2 style="font-size:18px;font-weight:800;color:var(--text)">Sửa bản dịch (@Model.LanguageCode.ToUpper())</h2>
+        </div>
+
+        <form asp-action="EditTranslation" method="post">
+            <input type="hidden" asp-for="TranslationID" />
+            <input type="hidden" asp-for="POIID" />
+            <input type="hidden" asp-for="LanguageCode" />
+
+            <div class="form-group">
+                <label class="form-label-admin">Ngôn ngữ</label>
+                <input type="text" class="form-control-admin" value="@langFlags.GetValueOrDefault(Model.LanguageCode, Model.LanguageCode)" disabled style="background:#f1f5f9" />
+            </div>
+
+            <div class="form-group">
+                <label class="form-label-admin">Tên hiển thị *</label>
+                <input asp-for="DisplayName" class="form-control-admin" required maxlength="200" />
+            </div>
+
+            <div class="form-group">
+                <label class="form-label-admin">Mô tả ngắn</label>
+                <input asp-for="ShortDescription" class="form-control-admin" maxlength="500" />
+            </div>
+
+            <div class="form-group">
+                <label class="form-label-admin">Nội dung thuyết minh (TTS) *</label>
+                <textarea asp-for="NarrationText" class="form-control-admin" rows="6" required maxlength="2000"></textarea>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn-primary-admin">
+                    <i class="fa-solid fa-floppy-disk"></i> Cập nhật bản dịch
+                </button>
+            </div>
+        </form>
+    </div>
+</div>

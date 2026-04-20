@@ -16,6 +16,14 @@ namespace TourGuideServer.Controllers
             _context = context;
         }
 
+        // ĐÃ THÊM: Hàm lấy tất cả bản dịch để WebCMS tìm ID lớn nhất
+        [HttpGet]
+        public async Task<IActionResult> GetAll()
+        {
+            var data = await _context.POITranslations.ToListAsync();
+            return Ok(data);
+        }
+
         [HttpGet("{poiId}")]
         public async Task<IActionResult> GetByPOI(string poiId)
         {
@@ -37,8 +45,12 @@ namespace TourGuideServer.Controllers
             if (exists)
                 return Conflict(new { message = $"Bản dịch '{translation.LanguageCode}' đã tồn tại." });
 
-            // Tạo ID chuỗi ngẫu nhiên cho TranslationID
-            translation.TranslationID = Guid.NewGuid().ToString().Substring(0, 10);
+            // ĐÃ SỬA: Chỉ tự tạo mã ngẫu nhiên nếu WebCMS không gửi mã sang. 
+            // Còn nếu WebCMS đã cấp mã T041, T042... thì giữ nguyên!
+            if (string.IsNullOrEmpty(translation.TranslationID))
+            {
+                translation.TranslationID = Guid.NewGuid().ToString().Substring(0, 10);
+            }
 
             _context.POITranslations.Add(translation);
             await _context.SaveChangesAsync();

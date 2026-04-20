@@ -1,16 +1,23 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using WebCMS.Services;
 
 namespace WebCMS.Controllers
 {
     public class VisitHistoryController : Controller
     {
-        private readonly IConfiguration _configuration;
-        public VisitHistoryController(IConfiguration configuration) => _configuration = configuration;
+        private readonly VisitHistoryService _service;
 
-        public IActionResult Index()
+        public VisitHistoryController(VisitHistoryService service)
         {
-            ViewBag.ApiUrl = _configuration["ApiSettings:BaseUrl"];
-            return View();
+            _service = service;
+        }
+
+        public async Task<IActionResult> Index()
+        {
+            var data = await _service.GetAllAsync();
+            // Sắp xếp lượt tham quan mới nhất lên đầu bàn
+            var sortedData = data.OrderByDescending(x => x.VisitTime).ToList();
+            return View(sortedData);
         }
     }
 }

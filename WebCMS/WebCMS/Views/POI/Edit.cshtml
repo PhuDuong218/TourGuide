@@ -4,7 +4,6 @@
 }
 
 <div style="max-width:760px">
-    <!-- Back -->
     <a asp-controller="POI" asp-action="Index" class="btn-outline-admin" style="margin-bottom:10px;display:inline-flex">
         <i class="fa-solid fa-arrow-left"></i> Danh sách POI
     </a>
@@ -13,25 +12,34 @@
         <div style="margin-bottom:28px">
             <h2 style="font-size:18px;font-weight:800;color:var(--text)">Sửa địa điểm</h2>
             <p style="font-size:13px;color:var(--text-muted);margin-top:4px">
-                Cập nhật thông tin địa điểm <strong>@Model.Name</strong>.
+                Cập nhật thông tin địa điểm <strong>@Model.RestaurantName</strong>.
                 Để trống phần ảnh nếu không muốn thay đổi ảnh hiện tại.
             </p>
         </div>
 
         <form asp-action="Edit" asp-route-id="@Model.POIID" method="post" enctype="multipart/form-data">
 
-            <!-- Giữ tên file ảnh cũ nếu không upload mới -->
             <input type="hidden" asp-for="Img" />
 
             <div class="form-group">
                 <label class="form-label-admin">Tên địa điểm *</label>
-                <input asp-for="Name" class="form-control-admin" placeholder="VD: Chùa Cầu, Hội An" required />
+                <input asp-for="RestaurantName" class="form-control-admin" placeholder="VD: Chùa Cầu, Hội An" required />
             </div>
 
             <div class="form-grid-2">
                 <div class="form-group">
-                    <label class="form-label-admin">Phân loại</label>
-                    <input asp-for="Category" class="form-control-admin" placeholder="VD: Di tích, Ẩm thực, Chợ..." />
+                    <label class="form-label-admin">Phân loại *</label>
+                    <select asp-for="Category" class="form-control-admin" required>
+                        <option value="">-- Chọn phân loại --</option>
+                        <option value="Quán ăn / Ẩm thực">Quán ăn / Ẩm thực</option>
+                        <option value="Di tích lịch sử">Di tích lịch sử</option>
+                        <option value="Bảo tàng">Bảo tàng</option>
+                        <option value="Chợ / Mua sắm">Chợ / Mua sắm</option>
+                        <option value="Tâm linh / Tôn giáo">Tâm linh / Tôn giáo</option>
+                        <option value="Danh lam thắng cảnh">Danh lam thắng cảnh</option>
+                        <option value="Giải trí / Công viên">Giải trí / Công viên</option>
+                        <option value="Khác">Khác</option>
+                    </select>
                 </div>
                 <div class="form-group">
                     <label class="form-label-admin">Loại</label>
@@ -61,17 +69,17 @@
 
             <div class="form-group">
                 <label class="form-label-admin">Địa chỉ</label>
-                <input asp-for="Description" class="form-control-admin" placeholder="VD: 1 Nguyễn Thị Minh Khai, Hội An" />
+                <input asp-for="Address" class="form-control-admin" placeholder="VD: 1 Nguyễn Thị Minh Khai, Hội An" />
             </div>
 
-            <!-- Ảnh hiện tại -->
             <div class="form-group">
                 <label class="form-label-admin">Ảnh hiện tại</label>
                 @if (!string.IsNullOrEmpty(Model.Img))
                 {
                     <div style="margin-bottom:10px">
-                        <img src="/uploads/@Model.Img" alt="@Model.Name"
+                        <img src="https://gzm4vrwg-7054.asse.devtunnels.ms/uploads/@Model.Img" alt="@Model.RestaurantName"
                              style="height:120px;border-radius:8px;border:1px solid var(--border);object-fit:cover" />
+
                         <div style="font-size:12px;color:var(--text-muted);margin-top:4px">
                             <i class="fa-solid fa-file-image"></i> @Model.Img
                         </div>
@@ -100,9 +108,20 @@
 
             <div class="form-group">
                 <label class="form-label-admin">Bán kính geofence (m)</label>
-                <input asp-for="Radius" type="number" class="form-control-admin"
+                <input asp-for="Radius" type="number" class="form-control-admin" value="10"
                        min="10" max="500" />
                 <div class="form-hint">Phạm vi kích hoạt thuyết minh khi khách đến gần. Mặc định 50m.</div>
+            </div>
+            <div class="form-group">
+                <label class="form-label-admin">Mức độ ưu tiên (Sao)</label>
+                <select asp-for="Priority" class="form-control-admin">
+                    <option value="1">1 Sao</option>
+                    <option value="2">2 Sao</option>
+                    <option value="3">3 Sao</option>
+                    <option value="4">4 Sao</option>
+                    <option value="5">5 Sao</option>
+                </select>
+                <div class="form-hint">Thay đổi mức độ ưu tiên hiện tại cho địa điểm này.</div>
             </div>
 
             <div class="form-actions">

@@ -67,9 +67,9 @@ namespace WebCMS.Services
             }
             content.Add(new StringContent(poi.POIID), "POIID");
 
-            if (!string.IsNullOrEmpty(poi.Name)) content.Add(new StringContent(poi.Name), "RestaurantName");
+            if (!string.IsNullOrEmpty(poi.RestaurantName)) content.Add(new StringContent(poi.RestaurantName), "RestaurantName");
             if (!string.IsNullOrEmpty(poi.Category)) content.Add(new StringContent(poi.Category), "Category");
-            if (!string.IsNullOrEmpty(poi.Description)) content.Add(new StringContent(poi.Description ), "Address"); 
+            if (!string.IsNullOrEmpty(poi.Address)) content.Add(new StringContent(poi.Address ), "Address"); 
 
             // Ép tọa độ dùng dấu chấm chuẩn quốc tế
             content.Add(new StringContent(poi.Latitude.ToString(System.Globalization.CultureInfo.InvariantCulture)), "Latitude");

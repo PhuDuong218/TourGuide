@@ -22,9 +22,10 @@ namespace TourGuideServer.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAll(string lang = "vi")
+        public async Task<IActionResult> GetAll(string? ownerId = null, string lang = "vi")
         {
-            var data = await _service.GetPOIsAsync(lang);
+            // Sử dụng Service để nó tự động Join bảng Dịch Thuật và Map sang DTO
+            var data = await _service.GetPOIsAsync(lang, ownerId);
             return Ok(data);
         }
 
@@ -152,5 +153,30 @@ namespace TourGuideServer.Controllers
             if (!ok) return NotFound();
             return NoContent();
         }
+
+        // API: Tăng lượt xem khi mở Bottom Sheet
+        [HttpPost("{id}/increment-view")]
+        public async Task<IActionResult> IncrementView(string id)
+        {
+            var poi = await _context.POIs.FindAsync(id);
+            if (poi == null) return NotFound();
+
+            poi.ViewCount += 1;
+            await _context.SaveChangesAsync();
+            return Ok(new { ViewCount = poi.ViewCount });
+        }
+
+        // API: Tăng lượt nghe khi ấn nút Nghe
+        [HttpPost("{id}/increment-listen")]
+        public async Task<IActionResult> IncrementListen(string id)
+        {
+            var poi = await _context.POIs.FindAsync(id);
+            if (poi == null) return NotFound();
+
+            poi.ListenCount += 1;
+            await _context.SaveChangesAsync();
+            return Ok(new { ListenCount = poi.ListenCount });
+        }
+
     }
 }

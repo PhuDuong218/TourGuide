@@ -1,10 +1,13 @@
+﻿using Microsoft.Maui.Media;
+
 namespace TourGuideMauiApp.Services;
 
 public class TTSService
 {
     private CancellationTokenSource? _cts;
 
-    public async Task SpeakAsync(string text)
+    // Thêm tham số speed, mặc định là 1.0f
+    public async Task SpeakAsync(string text, float speed = 1.0f)
     {
         if (string.IsNullOrEmpty(text)) return;
 
@@ -13,7 +16,14 @@ public class TTSService
 
         try
         {
-            await TextToSpeech.Default.SpeakAsync(text, cancelToken: _cts.Token);
+            // Cấu hình âm thanh (Điều chỉnh Pitch để mô phỏng sự thay đổi tốc độ)
+            var options = new SpeechOptions
+            {
+                Volume = 1.0f,
+                Pitch = speed
+            };
+
+            await TextToSpeech.Default.SpeakAsync(text, options, cancelToken: _cts.Token);
         }
         catch (OperationCanceledException) { }
         catch (Exception ex)
@@ -27,7 +37,7 @@ public class TTSService
         _cts?.Cancel();
         try
         {
-            await TextToSpeech.Default.SpeakAsync(string.Empty); 
+            await TextToSpeech.Default.SpeakAsync(string.Empty);
         }
         catch { }
     }

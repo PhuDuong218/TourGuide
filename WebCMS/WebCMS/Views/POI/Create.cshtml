@@ -4,7 +4,6 @@
 }
 
 <div style="max-width:760px">
-    <!-- Back -->
     <a asp-controller="POI" asp-action="Index" class="btn-outline-admin" style="margin-bottom:10px;display:inline-flex">
         <i class="fa-solid fa-arrow-left"></i> Danh sách POI
     </a>
@@ -19,13 +18,23 @@
 
             <div class="form-group">
                 <label class="form-label-admin">Tên địa điểm *</label>
-                <input asp-for="Name" class="form-control-admin" placeholder="VD: Chùa Cầu, Hội An" required />
+                <input asp-for="RestaurantName" class="form-control-admin" placeholder="VD: Chùa Cầu, Hội An" required />
             </div>
 
             <div class="form-grid-2">
                 <div class="form-group">
-                    <label class="form-label-admin">Phân loại</label>
-                    <input asp-for="Category" class="form-control-admin" placeholder="VD: Di tích, Ẩm thực, Chợ..." />
+                    <label class="form-label-admin">Phân loại *</label>
+                    <select asp-for="Category" class="form-control-admin" required>
+                        <option value="">-- Chọn phân loại --</option>
+                        <option value="Quán ăn / Ẩm thực">Quán ăn / Ẩm thực</option>
+                        <option value="Di tích lịch sử">Di tích lịch sử</option>
+                        <option value="Bảo tàng">Bảo tàng</option>
+                        <option value="Chợ / Mua sắm">Chợ / Mua sắm</option>
+                        <option value="Tâm linh / Tôn giáo">Tâm linh / Tôn giáo</option>
+                        <option value="Danh lam thắng cảnh">Danh lam thắng cảnh</option>
+                        <option value="Giải trí / Công viên">Giải trí / Công viên</option>
+                        <option value="Khác">Khác</option>
+                    </select>
                 </div>
                 <div class="form-group">
                     <label class="form-label-admin">Loại</label>
@@ -59,7 +68,7 @@
 
             <div class="form-group">
                 <label class="form-label-admin">Địa chỉ</label>
-                <input asp-for="Description" class="form-control-admin" placeholder="VD: 1 Nguyễn Thị Minh Khai, Hội An" />
+                <input asp-for="Address" class="form-control-admin" placeholder="VD: 1 Nguyễn Thị Minh Khai, Hội An" />
             </div>
 
             <div class="form-group">
@@ -77,6 +86,17 @@
                 <input asp-for="Radius" type="number" class="form-control-admin"
                        placeholder="50" value="50" min="10" max="500" />
                 <div class="form-hint">Phạm vi kích hoạt thuyết minh khi khách đến gần. Mặc định 50m.</div>
+            </div>
+            <div class="form-group">
+                <label class="form-label-admin">Mức độ ưu tiên (Sao)</label>
+                <select asp-for="Priority" class="form-control-admin">
+                    <option value="1">1 Sao (Thấp)</option>
+                    <option value="2">2 Sao</option>
+                    <option value="3">3 Sao (Trung bình)</option>
+                    <option value="4">4 Sao</option>
+                    <option value="5">5 Sao (Cao nhất)</option>
+                </select>
+                <div class="form-hint">Dùng để sắp xếp thứ tự hiển thị ưu tiên trên ứng dụng.</div>
             </div>
 
             <div class="form-actions">

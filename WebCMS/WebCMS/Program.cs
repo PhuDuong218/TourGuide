@@ -16,15 +16,32 @@ if (string.IsNullOrEmpty(apiUrl))
 builder.Services.AddControllersWithViews();
 builder.Services.AddControllers();
 
-// 🔥 4. CẤU HÌNH HTTPCLIENT GỌI API
-// Đăng ký POIService thông qua Interface
+// 🔥 4. CẤU HÌNH HTTPCLIENT GỌI API (ĐĂNG KÝ CÁC DỊCH VỤ)
+// Đăng ký StatsService
+builder.Services.AddHttpClient<StatsService>(client =>
+{
+    client.BaseAddress = new Uri(apiUrl);
+});
+// Đăng ký POIService
 builder.Services.AddHttpClient<IPOIService, POIService>(client =>
 {
     client.BaseAddress = new Uri(apiUrl);
 });
 
-// Đăng ký TranslationService trực tiếp
+// Đăng ký TranslationService
 builder.Services.AddHttpClient<TranslationService>(client =>
+{
+    client.BaseAddress = new Uri(apiUrl);
+});
+
+// ✅ Đăng ký OwnerRequestService (MỚI)
+builder.Services.AddHttpClient<OwnerRequestService>(client =>
+{
+    client.BaseAddress = new Uri(apiUrl);
+});
+
+// ✅ Đăng ký VisitHistoryService (MỚI)
+builder.Services.AddHttpClient<VisitHistoryService>(client =>
 {
     client.BaseAddress = new Uri(apiUrl);
 });
@@ -38,9 +55,7 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
-// Lưu ý: Nếu gặp lỗi SSL khi gọi API http (5015), bạn có thể tạm tắt dòng này để test
 app.UseHttpsRedirection();
-
 app.UseStaticFiles();
 app.UseRouting();
 app.UseAuthorization();
@@ -49,7 +64,6 @@ app.MapControllers();
 // 🔥 6. ROUTE
 app.MapControllerRoute(
     name: "default",
-    // Theo yêu cầu của bạn: Chạy Account/Login trước khi vào trang chủ
     pattern: "{controller=Account}/{action=Login}/{id?}");
 
 app.Run();

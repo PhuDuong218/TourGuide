@@ -1,0 +1,192 @@
+﻿@model WebCMS.Models.DashboardViewModel
+@{
+    ViewData["Title"] = "Bảng điều khiển";
+}
+
+<div class="row g-4">
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm p-3" style="border-left: 5px solid #6f42c1 !important;">
+            <div class="text-muted small fw-bold">TỔNG NGÔN NGỮ</div>
+            <div class="d-flex justify-content-between align-items-center mt-2">
+                <h2 class="fw-bold mb-0">@Model.TotalLanguages</h2>
+                <i class="fa-solid fa-language text-purple fs-3"></i>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm p-3" style="border-left: 5px solid #198754 !important;">
+            <div class="text-muted small fw-bold">TỔNG SỐ QR</div>
+            <div class="d-flex justify-content-between align-items-center mt-2">
+                <h2 class="fw-bold mb-0">@Model.TotalQR</h2>
+                <i class="fa-solid fa-qrcode text-success fs-3"></i>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm p-3" style="border-left: 5px solid #ffc107 !important;">
+            <div class="text-muted small fw-bold">LƯỢT QUÉT QR</div>
+            <div class="d-flex justify-content-between align-items-center mt-2">
+                <h2 class="fw-bold mb-0">@Model.TotalQRScans</h2>
+                <i class="fa-solid fa-bolt text-warning fs-3"></i>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm p-3" style="border-left: 5px solid #0dcaf0 !important;">
+            <div class="text-muted small fw-bold">LƯỢT SỬ DỤNG APP</div>
+            <div class="d-flex justify-content-between align-items-center mt-2">
+                <h2 class="fw-bold mb-0">@Model.TotalAppUsage</h2>
+                <i class="fa-solid fa-headphones text-info fs-3"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm p-3" style="border-left: 5px solid #0d6efd !important;">
+            <div class="text-muted small fw-bold">ĐANG TRUY CẬP (REAL-TIME)</div>
+            <div class="d-flex justify-content-between align-items-center mt-2">
+                <h2 class="fw-bold mb-0" style="color: #0d6efd;">@Model.ActiveToday</h2>
+                <i class="fa-solid fa-user-check text-primary fs-3"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm p-4">
+            <h5 class="fw-bold mb-4" style="color: #1e40af;">
+                <i class="fa-solid fa-chart-line me-2"></i>Xu hướng sử dụng 7 ngày qua
+            </h5>
+            <div style="height: 300px;">
+                <canvas id="usageChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4 mb-5">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm p-4">
+            <h5 class="fw-bold mb-4" style="color: #1e40af;">
+                <i class="fa-solid fa-chart-simple me-2"></i>Top 5 Địa điểm được nghe nhiều nhất
+            </h5>
+            <div style="height: 350px;">
+                <canvas id="topPoiChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            // HÀM CẬP NHẬT RIÊNG Ô NGƯỜI DÙNG HOẠT ĐỘNG
+            function updateActiveUsers() {
+                fetch('/Home/GetRealTimeActiveUsers')
+                    .then(response => response.json())
+                    .then(data => {
+                        const element = document.getElementById('active-count-val');
+                        if (element) {
+                            element.innerText = data.count;
+                        }
+                    })
+                    .catch(err => console.error("Lỗi cập nhật real-time:", err));
+            }
+
+            // Chạy cập nhật mỗi 3 giây (3000ms)
+            setInterval(updateActiveUsers, 3000);
+
+            // ==========================================
+            // BIỂU ĐỒ 1: XU HƯỚNG USAGE 7 NGÀY
+            // ==========================================
+            const usageCtx = document.getElementById('usageChart').getContext('2d');
+            new Chart(usageCtx, {
+                type: 'line',
+                data: {
+                    labels: @Html.Raw(Json.Serialize(Model.TrendLabels)),
+                    datasets: [
+                        {
+                            label: 'Cài đặt',
+                            data: @Html.Raw(Json.Serialize(Model.InstallTrend)),
+                            borderColor: '#3b82f6',
+                            backgroundColor: '#3b82f6',
+                            borderWidth: 2,
+                            tension: 0.3,
+                            pointRadius: 4,
+                            fill: false
+                        },
+                        {
+                            label: 'Hoạt động',
+                            data: @Html.Raw(Json.Serialize(Model.ActiveTrend)),
+                            borderColor: '#10b981',
+                            backgroundColor: '#10b981',
+                            borderWidth: 2,
+                            tension: 0.3,
+                            pointRadius: 4,
+                            fill: false
+                        },
+                        {
+                            label: 'Quét QR',
+                            data: @Html.Raw(Json.Serialize(Model.ScanTrend)),
+                            borderColor: '#f59e0b',
+                            backgroundColor: '#f59e0b',
+                            borderWidth: 2,
+                            tension: 0.3,
+                            pointRadius: 4,
+                            fill: false
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { position: 'top' } },
+                    scales: {
+                        y: { beginAtZero: true, grid: { color: '#f3f4f6' } },
+                        x: { grid: { display: false } }
+                    }
+                }
+            });
+
+            // ==========================================
+            // BIỂU ĐỒ 2: TOP 5 ĐỊA ĐIỂM
+            // ==========================================
+            const topCtx = document.getElementById('topPoiChart').getContext('2d');
+            new Chart(topCtx, {
+                type: 'bar',
+                data: {
+                    labels: @Html.Raw(Json.Serialize(Model.ChartLabels)),
+                    datasets: [{
+                        label: 'Lượt nghe',
+                        data: @Html.Raw(Json.Serialize(Model.ChartValues)),
+                        backgroundColor: [
+                            '#7dd3fc', '#f9a8d4', '#fde047', '#5eead4', '#c4b5fd'
+                        ],
+                        borderRadius: 4,
+                        barPercentage: 0.6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { borderDash: [4, 4], color: '#e5e7eb' },
+                            ticks: { stepSize: 2 }
+                        },
+                        x: { grid: { display: false } }
+                    }
+                }
+            });
+        });
+    </script>
+}

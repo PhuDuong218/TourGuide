@@ -29,24 +29,28 @@
 
         <!-- ── Gợi ý POI gần nhất ── -->
         <Border x:Name="nearestPoiPanel"
-                IsVisible="False"
-                VerticalOptions="Start"
-                HorizontalOptions="Center"
-                Margin="0,110,0,0"
-                BackgroundColor="#EEFFFFFF"
-                StrokeShape="RoundRectangle 20"
-                Padding="16,8">
+        IsVisible="False"
+        VerticalOptions="Start"
+        HorizontalOptions="Start" 
+        Margin="15,50,0,0"
+        BackgroundColor="White"
+        StrokeThickness="0"
+        WidthRequest="220"
+        StrokeShape="RoundRectangle 15">
+            <Border.Shadow>
+                <Shadow Brush="Black" Offset="0,4" Radius="10" Opacity="0.1"/>
+            </Border.Shadow>
             <Border.GestureRecognizers>
                 <TapGestureRecognizer Tapped="OnNearestPoiTapped"/>
             </Border.GestureRecognizers>
-            <HorizontalStackLayout Spacing="8" VerticalOptions="Center">
-                <Label Text="💡" FontSize="16"/>
-                <Label x:Name="nearestPoiLabel" 
-                       Text="Gần bạn: ..." 
-                       TextColor="#6200EE" 
-                       FontSize="13" 
-                       FontAttributes="Bold"/>
-            </HorizontalStackLayout>
+
+            <Grid ColumnDefinitions="Auto,*" Padding="10" ColumnSpacing="10">
+                <Label Grid.Column="0" Text="📍" FontSize="18" VerticalOptions="Center"/>
+                <VerticalStackLayout Grid.Column="1" VerticalOptions="Center">
+                    <Label Text="Gần bạn" FontSize="10" TextColor="#888" FontAttributes="Bold"/>
+                    <Label x:Name="nearestPoiLabel" Text="..." TextColor="#1A1A2E" FontSize="12" FontAttributes="Bold" LineBreakMode="TailTruncation"/>
+                </VerticalStackLayout>
+            </Grid>
         </Border>
 
         <!-- ── Loading overlay ── -->
@@ -72,209 +76,57 @@
                 IsVisible="False"
                 VerticalOptions="End"
                 BackgroundColor="White"
-                StrokeShape="RoundRectangle 20,20,0,0"
+                StrokeShape="RoundRectangle 24,24,0,0"
                 StrokeThickness="0"
-                Padding="0,0,0,28">
+                Padding="0,10,0,30">
             <Border.Shadow>
-                <Shadow Brush="Black" Offset="0,-4" Radius="16" Opacity="0.2"/>
+                <Shadow Brush="Black" Offset="0,-5" Radius="15" Opacity="0.15"/>
             </Border.Shadow>
 
-            <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto">
+            <Grid RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="12">
 
-                <!-- Drag handle -->
-                <BoxView Grid.Row="0"
-                         WidthRequest="40" HeightRequest="4"
-                         BackgroundColor="#DDDDDD" CornerRadius="2"
-                         HorizontalOptions="Center" Margin="0,10,0,0"/>
+                <BoxView Grid.Row="0" WidthRequest="40" HeightRequest="5" BackgroundColor="#E0E0E0" CornerRadius="2.5" HorizontalOptions="Center"/>
 
-                <!-- Ảnh POI -->
-                <Border Grid.Row="1"
-                        Margin="16,14,16,0"
-                        HeightRequest="175"
-                        StrokeShape="RoundRectangle 14"
-                        StrokeThickness="0"
-                        BackgroundColor="#F0EEFF">
-                    <Grid IsClippedToBounds="True">
-                        <Label x:Name="imgPlaceholder"
-                               Text="" FontSize="52"
-                               HorizontalOptions="Center"
-                               VerticalOptions="Center"/>
-                        <Image x:Name="poiImage"
-                               Aspect="AspectFill" IsVisible="False"/>
-                    </Grid>
+                <Border Grid.Row="1" Margin="20,5,20,0" HeightRequest="160" StrokeShape="RoundRectangle 16" StrokeThickness="0">
+                    <Image x:Name="poiImage" Aspect="AspectFill" BackgroundColor="#F5F5F5"/>
                 </Border>
 
-                <!-- Tên + Địa chỉ + Mô tả -->
-                <VerticalStackLayout Grid.Row="2"
-                                     Margin="16,12,16,0" Spacing="3">
-                    <Label x:Name="poiName"
-                           FontSize="18" FontAttributes="Bold"
-                           TextColor="#1A1A2E"
-                           LineBreakMode="TailTruncation"/>
-                    <Label x:Name="poiAddress"
-                           FontSize="12" TextColor="#888"
-                           IsVisible="False"
-                           LineBreakMode="TailTruncation"/>
-                    <Label x:Name="poiDistance"
-                           FontSize="12" TextColor="#6200EE"
-                           FontAttributes="Bold"
-                           IsVisible="False"
-                           Margin="0,2,0,0"/>
-                    <Label x:Name="poiDescription"
-                           FontSize="13" TextColor="#555"
-                           MaxLines="3" LineBreakMode="TailTruncation"
-                           Margin="0,4,0,0"/>
+                <VerticalStackLayout Grid.Row="2" Margin="20,0,20,0" Spacing="6">
+                    <Label x:Name="poiName" FontSize="22" FontAttributes="Bold" TextColor="#111827" LineBreakMode="TailTruncation"/>
+
+                    <HorizontalStackLayout Spacing="5">
+                        <Label Text="📍" FontSize="14" VerticalOptions="Center"/>
+                        <Label x:Name="poiAddress" FontSize="14" TextColor="#6B7280" LineBreakMode="TailTruncation" MaxLines="1"/>
+                    </HorizontalStackLayout>
+
+                    <HorizontalStackLayout Spacing="5">
+                        <Label Text="📏" FontSize="14" VerticalOptions="Center"/>
+                        <Label x:Name="poiDistance" FontSize="14" TextColor="#6200EE" FontAttributes="Bold"/>
+                    </HorizontalStackLayout>
+
+                    <Label x:Name="poiDescription" FontSize="14" TextColor="#4B5563" MaxLines="3" LineHeight="1.3" LineBreakMode="TailTruncation" Margin="0,5,0,0"/>
                 </VerticalStackLayout>
 
-                <!-- ── Row 3: Nút chọn ngôn ngữ ── -->
-                <Grid Grid.Row="3"
-                      Margin="16,14,16,0"
-                      ColumnDefinitions="*,*,*,*"
-                      ColumnSpacing="8">
+                <Grid Grid.Row="3" Margin="20,10,20,0" ColumnDefinitions="*, Auto" ColumnSpacing="15" VerticalOptions="Center">
 
-                    <!-- 🇻🇳 VI -->
-                    <Border x:Name="btnLangVI"
-                            Grid.Column="0"
-                            BackgroundColor="#6200EE"
-                            StrokeShape="RoundRectangle 20"
-                            StrokeThickness="0"
-                            Padding="0,8">
-                        <Border.GestureRecognizers>
-                            <TapGestureRecognizer Tapped="OnLangViTapped"/>
-                        </Border.GestureRecognizers>
-                        <VerticalStackLayout Spacing="1" HorizontalOptions="Center">
-                            <Label Text="🇻🇳" FontSize="16" HorizontalOptions="Center"/>
-                            <Label x:Name="lblVI" Text="VI" FontSize="10"
-                                   TextColor="White" FontAttributes="Bold"
-                                   HorizontalOptions="Center"/>
-                        </VerticalStackLayout>
-                    </Border>
-
-                    <!-- 🇬🇧 EN -->
-                    <Border x:Name="btnLangEN"
-                            Grid.Column="1"
-                            BackgroundColor="#EEEEEE"
-                            StrokeShape="RoundRectangle 20"
-                            StrokeThickness="0"
-                            Padding="0,8">
-                        <Border.GestureRecognizers>
-                            <TapGestureRecognizer Tapped="OnLangEnTapped"/>
-                        </Border.GestureRecognizers>
-                        <VerticalStackLayout Spacing="1" HorizontalOptions="Center">
-                            <Label Text="🇬🇧" FontSize="16" HorizontalOptions="Center"/>
-                            <Label x:Name="lblEN" Text="EN" FontSize="10"
-                                   TextColor="#555" FontAttributes="Bold"
-                                   HorizontalOptions="Center"/>
-                        </VerticalStackLayout>
-                    </Border>
-
-                    <!-- 🇫🇷 FR -->
-                    <Border x:Name="btnLangFR"
-                            Grid.Column="2"
-                            BackgroundColor="#EEEEEE"
-                            StrokeShape="RoundRectangle 20"
-                            StrokeThickness="0"
-                            Padding="0,8">
-                        <Border.GestureRecognizers>
-                            <TapGestureRecognizer Tapped="OnLangFrTapped"/>
-                        </Border.GestureRecognizers>
-                        <VerticalStackLayout Spacing="1" HorizontalOptions="Center">
-                            <Label Text="🇫🇷" FontSize="16" HorizontalOptions="Center"/>
-                            <Label x:Name="lblFR" Text="FR" FontSize="10"
-                                   TextColor="#555" FontAttributes="Bold"
-                                   HorizontalOptions="Center"/>
-                        </VerticalStackLayout>
-                    </Border>
-
-                    <!-- 🇯🇵 JA -->
-                    <Border x:Name="btnLangJA"
-                            Grid.Column="3"
-                            BackgroundColor="#EEEEEE"
-                            StrokeShape="RoundRectangle 20"
-                            StrokeThickness="0"
-                            Padding="0,8">
-                        <Border.GestureRecognizers>
-                            <TapGestureRecognizer Tapped="OnLangJaTapped"/>
-                        </Border.GestureRecognizers>
-                        <VerticalStackLayout Spacing="1" HorizontalOptions="Center">
-                            <Label Text="🇯🇵" FontSize="16" HorizontalOptions="Center"/>
-                            <Label x:Name="lblJA" Text="JA" FontSize="10"
-                                   TextColor="#555" FontAttributes="Bold"
-                                   HorizontalOptions="Center"/>
-                        </VerticalStackLayout>
-                    </Border>
-
-                </Grid>
-
-                <!-- ── Row 4: Audio controls ── -->
-                <Grid Grid.Row="4"
-                      Margin="16,14,16,0"
-                      ColumnDefinitions="*,52,16,60,16,52,*,Auto"
-                      VerticalOptions="Center">
-
-                    <!-- ⏪ Tua lùi -->
-                    <Border Grid.Column="1"
-                            BackgroundColor="#EDE7F6"
-                            StrokeShape="RoundRectangle 26"
-                            StrokeThickness="0"
-                            WidthRequest="52" HeightRequest="52"
-                            HorizontalOptions="Center">
-                        <Border.GestureRecognizers>
-                            <TapGestureRecognizer Tapped="OnSeekBackward"/>
-                        </Border.GestureRecognizers>
-                        <VerticalStackLayout HorizontalOptions="Center"
-                                             VerticalOptions="Center" Spacing="0">
-                            <Label Text="⏪" FontSize="20" HorizontalOptions="Center"/>
-                            <Label Text="-10s" FontSize="9" TextColor="#6200EE"
-                                   HorizontalOptions="Center"/>
-                        </VerticalStackLayout>
-                    </Border>
-
-                    <!-- ▶/⏸ Play-Pause -->
-                    <Border Grid.Column="3"
-                            BackgroundColor="#6200EE"
-                            StrokeShape="RoundRectangle 30"
-                            StrokeThickness="0"
-                            WidthRequest="60" HeightRequest="60"
-                            HorizontalOptions="Center">
+                    <Border Grid.Column="0" BackgroundColor="#6200EE" StrokeShape="RoundRectangle 25" HeightRequest="50" StrokeThickness="0">
                         <Border.GestureRecognizers>
                             <TapGestureRecognizer Tapped="OnPlayPauseTapped"/>
                         </Border.GestureRecognizers>
-                        <Label x:Name="playPauseIcon"
-                               Text="▶" FontSize="26" TextColor="White"
-                               HorizontalOptions="Center"
-                               VerticalOptions="Center"/>
+                        <HorizontalStackLayout HorizontalOptions="Center" VerticalOptions="Center" Spacing="10" InputTransparent="True">
+                            <Label x:Name="playPauseIcon" Text="▶" FontSize="20" TextColor="White" VerticalOptions="Center"/>
+                            <Label x:Name="playStatusText" Text="Phát thuyết minh" FontSize="16" TextColor="White" FontAttributes="Bold" VerticalOptions="Center"/>
+                        </HorizontalStackLayout>
                     </Border>
 
-                    <!-- ⏩ Tua tới -->
-                    <Border Grid.Column="5"
-                            BackgroundColor="#EDE7F6"
-                            StrokeShape="RoundRectangle 26"
-                            StrokeThickness="0"
-                            WidthRequest="52" HeightRequest="52"
-                            HorizontalOptions="Center">
+                    <Border Grid.Column="1" BackgroundColor="#F3F4F6" StrokeShape="RoundRectangle 25" WidthRequest="50" HeightRequest="50" StrokeThickness="0">
                         <Border.GestureRecognizers>
-                            <TapGestureRecognizer Tapped="OnSeekForward"/>
+                            <TapGestureRecognizer Tapped="OnCloseBottomSheet"/>
                         </Border.GestureRecognizers>
-                        <VerticalStackLayout HorizontalOptions="Center"
-                                             VerticalOptions="Center" Spacing="0">
-                            <Label Text="⏩" FontSize="20" HorizontalOptions="Center"/>
-                            <Label Text="+10s" FontSize="9" TextColor="#6200EE"
-                                   HorizontalOptions="Center"/>
-                        </VerticalStackLayout>
+                        <Label Text="✕" FontSize="18" TextColor="#374151" HorizontalOptions="Center" VerticalOptions="Center" FontAttributes="Bold"/>
                     </Border>
 
-                    <!-- ✕ Đóng -->
-                    <Button Grid.Column="7"
-                            Text="✕"
-                            Clicked="OnCloseBottomSheet"
-                            BackgroundColor="#EEEEEE" TextColor="#555"
-                            CornerRadius="22"
-                            WidthRequest="44" HeightRequest="44"
-                            FontSize="16" Padding="0"
-                            VerticalOptions="Center"/>
                 </Grid>
-
             </Grid>
         </Border>
 

@@ -60,7 +60,6 @@ public partial class MapPage : ContentPage
 
         if (!string.IsNullOrEmpty(SelectedPoiId))
         {
-            // Vì POIID trong SQL là NVARCHAR (string), nên không cần parse sang int
             string id = SelectedPoiId;
             System.Diagnostics.Debug.WriteLine($"[MapPage] Đang focus vào POI ID: {id}");
 
@@ -181,7 +180,7 @@ public partial class MapPage : ContentPage
             var label = this.FindByName<Label>("nearestPoiLabel");
             var panel = this.FindByName<Border>("nearestPoiPanel");
 
-            if (label != null) label.Text = $"Gần bạn: {poi.Name} ({Math.Round(distance)}m)";
+            if (label != null) label.Text = $"Gần bạn: {poi.RestaurantName} ({Math.Round(distance)}m)";
             if (panel != null) panel.IsVisible = true;
         });
     }
@@ -198,7 +197,7 @@ public partial class MapPage : ContentPage
             if (string.IsNullOrEmpty(text) || !text.Contains(":") || !text.Contains("(")) return;
 
             var poiNameStr = text.Split(':')[1].Split('(')[0].Trim();
-            var poi = _allPois.FirstOrDefault(p => p.Name == poiNameStr);
+            var poi = _allPois.FirstOrDefault(p => p.RestaurantName == poiNameStr);
 
             if (poi != null)
             {
@@ -212,28 +211,29 @@ public partial class MapPage : ContentPage
         }
     }
 
-    private async Task ShowPoiDetails(POIDTO poi, string langCode = "VI")
+    // Đổi từ private void thành private async Task
+    private async Task ShowPoiDetails(POIDTO poi)
     {
         await StopAudio();
 
         _currentPOI = poi;
-        _currentNarration = string.IsNullOrEmpty(poi.Narration)
-            ? poi.Description
-            : poi.Narration;
 
-        // ─── Ánh xạ các thành phần UI ───
+        // 1. Cập nhật tên biến NarrationText và ShortDescription
+        _currentNarration = string.IsNullOrEmpty(poi.NarrationText) ? poi.ShortDescription : poi.NarrationText;
+
+        // Khai báo các biến UI MỘT LẦN DUY NHẤT
         var nameLabel = this.FindByName<Label>("poiName");
         var descLabel = this.FindByName<Label>("poiDescription");
         var addrLabel = this.FindByName<Label>("poiAddress");
         var distLabel = this.FindByName<Label>("poiDistance");
         var image = this.FindByName<Microsoft.Maui.Controls.Image>("poiImage");
-        var placeholder = this.FindByName<Label>("imgPlaceholder");
         var icon = this.FindByName<Label>("playPauseIcon");
+        var statusText = this.FindByName<Label>("playStatusText");
         var sheet = this.FindByName<Border>("poiBottomSheet");
 
-        // ─── Gán thông tin văn bản ───
-        if (nameLabel != null) nameLabel.Text = poi.Name;
-        if (descLabel != null) descLabel.Text = poi.Description;
+        // 2. Gán dữ liệu vào UI
+        if (nameLabel != null) nameLabel.Text = poi.RestaurantName;
+        if (descLabel != null) descLabel.Text = poi.ShortDescription; // Gán mô tả ngắn
 
         if (addrLabel != null)
         {
@@ -248,56 +248,50 @@ public partial class MapPage : ContentPage
             }
         }
 
-        // ─── Tính toán và hiển thị khoảng cách ───
         if (distLabel != null && _lastLocation != null && poi.Latitude != 0)
         {
-            double distance = Location.CalculateDistance(
-                _lastLocation.Latitude, _lastLocation.Longitude,
-                poi.Latitude, poi.Longitude,
-                DistanceUnits.Kilometers) * 1000;
-
+            double distance = Location.CalculateDistance(_lastLocation.Latitude, _lastLocation.Longitude, poi.Latitude, poi.Longitude, DistanceUnits.Kilometers) * 1000;
             distLabel.Text = $"📏 Cách bạn: {Math.Round(distance)}m";
             distLabel.IsVisible = true;
         }
-        else if (distLabel != null)
-        {
-            distLabel.IsVisible = false;
-        }
+        else if (distLabel != null) distLabel.IsVisible = false;
 
-        // ─── XỬ LÝ HIỂN THỊ ẢNH (Dùng Img) ───
-        if (image != null && placeholder != null)
+        // 3. Xử lý hình ảnh
+        if (image != null)
         {
             if (!string.IsNullOrEmpty(poi.Img))
             {
-      
-                string baseAddress = "https://gzm4vrwg-7054.asse.devtunnels.ms/api";
-                string finalUrl = $"{baseAddress}uploads/{poi.Img}";
-
-                image.Source = ImageSource.FromUri(new Uri(finalUrl));
+                image.Source = ImageSource.FromUri(new Uri($"https://gzm4vrwg-7054.asse.devtunnels.ms/uploads/{poi.Img}"));
                 image.IsVisible = true;
-                placeholder.IsVisible = false;
             }
             else
             {
+                image.Source = null;
                 image.IsVisible = false;
-                placeholder.IsVisible = true;
-                placeholder.Text = "🏛";
             }
         }
 
-        // ─── Trạng thái Audio ───
+        // 4. Đặt lại trạng thái nút Play
         if (icon != null) icon.Text = "▶";
+        if (statusText != null) statusText.Text = "Phát thuyết minh";
         _isPlaying = false;
 
-        UpdateLanguageUI(langCode.ToUpper());
-
-        // ─── Hiệu ứng mở Bottom Sheet ───
+        // 5. Hiển thị Bottom Sheet
         if (sheet != null)
         {
             sheet.IsVisible = true;
             sheet.TranslationY = 400;
             await sheet.TranslateTo(0, 0, 280, Easing.CubicOut);
         }
+
+        // 6. Gửi API tăng lượt xem
+        try
+        {
+            using var client = new HttpClient();
+            string apiUrl = $"https://gzm4vrwg-7054.asse.devtunnels.ms/api/POI/{poi.POIID}/increment-view";
+            _ = client.PostAsync(apiUrl, null);
+        }
+        catch { /* Bỏ qua lỗi mạng */ }
     }
 
     private void InitMapIfNeeded()
@@ -387,15 +381,15 @@ public partial class MapPage : ContentPage
                 var (x, y) = SphericalMercator.FromLonLat(poi.Longitude, poi.Latitude);
                 var feature = new PointFeature(x, y);
                 feature["POIID"] = poi.POIID;
-                feature["Name"] = poi.Name;
-                feature["Description"] = poi.Description;
-                feature["Narration"] = poi.Narration;
+                feature["RestaurantName"] = poi.RestaurantName;
+                feature["ShortDescription"] = poi.ShortDescription;
+                feature["NarrationText"] = poi.NarrationText;
                 feature["Address"] = poi.Address ?? "";
                 feature["Img"] = poi.Img ?? "";
                 feature["Latitude"] = poi.Latitude;
                 feature["Longitude"] = poi.Longitude;
 
-                foreach (var style in CreatePinStyle(googleRed, poi.Name)) feature.Styles.Add(style);
+                foreach (var style in CreatePinStyle(googleRed, poi.RestaurantName)) feature.Styles.Add(style);
                 features.Add(feature);
             }
             _poiLayer.Features = features;
@@ -468,9 +462,9 @@ public partial class MapPage : ContentPage
         var poi = new POIDTO
         {
             POIID = feature["POIID"]?.ToString() ?? "",
-            Name = feature["Name"]?.ToString() ?? "",
-            Description = feature["Description"]?.ToString() ?? "",
-            Narration = feature["Narration"]?.ToString() ?? "",
+            RestaurantName = feature["RestaurantName"]?.ToString() ?? "",
+            ShortDescription = feature["ShortDescription"]?.ToString() ?? "",
+            NarrationText = feature["NarrationText"]?.ToString() ?? "",
             Address = feature["Address"]?.ToString(),
 
             // SỬA TẠI ĐÂY: Gán vào Img thay vì ImageUrl
@@ -481,69 +475,6 @@ public partial class MapPage : ContentPage
         };
 
         await ShowPoiDetails(poi);
-    }
-
-    // ─── Language selection handlers ──────────────────────────────────────────
-    private async void OnLangViTapped(object sender, MauiTappedEventArgs e) => await ChangeLanguage("vi");
-    private async void OnLangEnTapped(object sender, MauiTappedEventArgs e) => await ChangeLanguage("en");
-    private async void OnLangFrTapped(object sender, MauiTappedEventArgs e) => await ChangeLanguage("fr");
-    private async void OnLangJaTapped(object sender, MauiTappedEventArgs e) => await ChangeLanguage("ja");
-
-    private async Task ChangeLanguage(string langCode)
-    {
-        if (_currentPOI == null) return;
-
-        UpdateLanguageUI(langCode.ToUpper());
-        ShowLoading("Đang chuyển ngôn ngữ...");
-
-        try
-        {
-            var updatedPoi = await _dbService.GetPOIByIdAsync(_currentPOI.POIID, langCode.ToLower());
-
-            if (updatedPoi != null)
-            {
-                await ShowPoiDetails(updatedPoi, langCode);
-            }
-        }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"Lỗi chuyển ngôn ngữ: {ex.Message}");
-        }
-        finally
-        {
-            HideLoading();
-        }
-    }
-
-    private void UpdateLanguageUI(string lang)
-    {
-        var inactiveBg = MauiColor.FromArgb("#EEEEEE");
-        var activeBg = MauiColor.FromArgb("#6200EE");
-        var inactiveText = MauiColor.FromArgb("#555555");
-        var activeText = Microsoft.Maui.Graphics.Colors.White;
-
-        var bVI = this.FindByName<Border>("btnLangVI");
-        var bEN = this.FindByName<Border>("btnLangEN");
-        var bFR = this.FindByName<Border>("btnLangFR");
-        var bJA = this.FindByName<Border>("btnLangJA");
-        var lVI = this.FindByName<Label>("lblVI");
-        var lEN = this.FindByName<Label>("lblEN");
-        var lFR = this.FindByName<Label>("lblFR");
-        var lJA = this.FindByName<Label>("lblJA");
-
-        // Reset UI
-        if (bVI != null) bVI.BackgroundColor = inactiveBg; if (lVI != null) lVI.TextColor = inactiveText;
-        if (bEN != null) bEN.BackgroundColor = inactiveBg; if (lEN != null) lEN.TextColor = inactiveText;
-        if (bFR != null) bFR.BackgroundColor = inactiveBg; if (lFR != null) lFR.TextColor = inactiveText;
-        if (bJA != null) bJA.BackgroundColor = inactiveBg; if (lJA != null) lJA.TextColor = inactiveText;
-
-        switch (lang)
-        {
-            case "VI": if (bVI != null) bVI.BackgroundColor = activeBg; if (lVI != null) lVI.TextColor = activeText; break;
-            case "EN": if (bEN != null) bEN.BackgroundColor = activeBg; if (lEN != null) lEN.TextColor = activeText; break;
-            case "FR": if (bFR != null) bFR.BackgroundColor = activeBg; if (lFR != null) lFR.TextColor = activeText; break;
-            case "JA": if (bJA != null) bJA.BackgroundColor = activeBg; if (lJA != null) lJA.TextColor = activeText; break;
-        }
     }
 
     // ─── Đóng Bottom Sheet ────────────────────────────────────────────────────
@@ -559,7 +490,8 @@ public partial class MapPage : ContentPage
     }
 
     // ─── Play / Pause ─────────────────────────────────────────────────────────
-    private async void OnPlayPauseTapped(object sender, MauiTappedEventArgs e)
+    // Đổi TappedEventArgs thành EventArgs cho chuẩn MAUI
+    private async void OnPlayPauseTapped(object sender, EventArgs e)
     {
         await ToggleAudioAsync();
     }
@@ -567,32 +499,64 @@ public partial class MapPage : ContentPage
     private async Task ToggleAudioAsync()
     {
         var icon = this.FindByName<Label>("playPauseIcon");
+        var statusText = this.FindByName<Label>("playStatusText");
+
         if (_isPlaying)
         {
             await _ttsService.StopAsync();
             _isPlaying = false;
+
             if (icon != null) icon.Text = "▶";
+            if (statusText != null) statusText.Text = "Phát thuyết minh";
         }
         else
         {
+            // 1. Nếu nội dung rỗng, phải báo cho người dùng biết!
+            if (string.IsNullOrEmpty(_currentNarration))
+            {
+                await Shell.Current.DisplayAlert("Thông báo", "Địa điểm này hiện chưa có nội dung thuyết minh.", "OK");
+                return;
+            }
+
+            double savedSpeed = Preferences.Get("TTSSpeed", 1.0);
             _isPlaying = true;
+
             if (icon != null) icon.Text = "⏸";
-            await _ttsService.SpeakAsync(_currentNarration);
-            _isPlaying = false;
-            if (icon != null) icon.Text = "▶";
+            if (statusText != null) statusText.Text = "Đang thuyết minh...";
+
+            if (_currentPOI != null)
+            {
+                _ = Task.Run(async () => {
+                    try
+                    {
+                        using var client = new HttpClient();
+                        string apiUrl = $"https://gzm4vrwg-7054.asse.devtunnels.ms/api/POI/{_currentPOI.POIID}/increment-listen";
+                        await client.PostAsync(apiUrl, null);
+                    }
+                    catch { }
+                });
+            }
+
+            try
+            {
+                // Thực hiện phát âm thanh
+                await _ttsService.SpeakAsync(_currentNarration, (float)savedSpeed);
+            }
+            catch (Exception ex)
+            {
+                // 2. BẮT LỖI: Nếu TTS của điện thoại bị lỗi, hiện lên cho dễ sửa
+                await Shell.Current.DisplayAlert("Lỗi phát giọng nói", $"Điện thoại không hỗ trợ hoặc lỗi: {ex.Message}", "OK");
+            }
+            finally
+            {
+                // Đảm bảo trạng thái quay về ban đầu khi nói xong
+                _isPlaying = false;
+                MainThread.BeginInvokeOnMainThread(() => {
+                    if (icon != null) icon.Text = "▶";
+                    if (statusText != null) statusText.Text = "Phát thuyết minh";
+                });
+            }
         }
-    }
-
-    private async void OnSeekBackward(object sender, MauiTappedEventArgs e)
-    {
-        await StopAudio();
-        await ToggleAudioAsync();
-    }
-
-    private async void OnSeekForward(object sender, MauiTappedEventArgs e)
-    {
-        await StopAudio();
-        await ToggleAudioAsync();
     }
 
     private async Task StopAudio()

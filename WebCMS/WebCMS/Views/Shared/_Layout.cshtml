@@ -30,6 +30,10 @@
 
             <div class="sidebar-section-label">Nội dung</div>
             <nav class="sidebar-nav">
+                <a asp-controller="Home" asp-action="Index" class="nav-link-item @(ctx == "Home" ? "active" : "")">
+                    <span class="nav-icon"><i class="fa-solid fa-gauge-high"></i></span>
+                    <span class="nav-label">Tổng quan</span>
+                </a>
                 <a asp-controller="POI" asp-action="Index" class="nav-link-item @(ctx == "POI" ? "active" : "")">
                     <span class="nav-icon"><i class="fa-solid fa-map-pin"></i></span>
                     <span class="nav-label">Điểm tham quan</span>
@@ -53,6 +57,10 @@
                 <a asp-controller="Users" asp-action="Index" class="nav-link-item @(ctx == "Users" ? "active" : "")">
                     <span class="nav-icon"><i class="fa-solid fa-users"></i></span>
                     <span class="nav-label">Quản lý người dùng</span>
+                </a>
+                <a asp-controller="OwnerRequest" asp-action="Index" class="nav-link-item @(ctx == "OwnerRequest" ? "active" : "")">
+                    <span class="nav-icon"><i class="fa-solid fa-store-check"></i></span>
+                    <span class="nav-label">Yêu cầu chủ quán</span>
                 </a>
                 <a asp-controller="Account" asp-action="Logout" class="nav-link-item nav-danger">
                     <span class="nav-icon"><i class="fa-solid fa-right-from-bracket"></i></span>

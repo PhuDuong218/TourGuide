@@ -4,14 +4,21 @@
        x:Class="TourGuideMauiApp.AppShell">
 
     <TabBar>
-        <Tab Title="Danh sách" Icon="dotnet_bot.png">
+        <Tab Title="Trang chủ" Icon="icon_list.png">
             <ShellContent ContentTemplate="{DataTemplate views:MainPage}" />
         </Tab>
-        <Tab Title="Bản đồ" Icon="dotnet_bot.png" Route="MapPage">
+
+        <Tab Title="Bản đồ" Icon="icon_map.png" Route="MapPage">
             <ShellContent ContentTemplate="{DataTemplate views:MapPage}" />
         </Tab>
-        <Tab Title="Quét mã" Icon="dotnet_bot.png">
+
+        <Tab Title="Quét mã" Icon="icon_qr.png">
             <ShellContent ContentTemplate="{DataTemplate views:ScannerPage}" />
         </Tab>
+
+        <Tab Title="Cài đặt" Icon="icon_settings.png">
+            <ShellContent ContentTemplate="{DataTemplate views:SettingsPage}" />
+        </Tab>
     </TabBar>
+
 </Shell>

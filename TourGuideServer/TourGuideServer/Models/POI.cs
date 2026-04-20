@@ -14,5 +14,8 @@
         public string? OwnerID { get; set; } 
 
         public ICollection<POITranslation> Translations { get; set; } = new List<POITranslation>();
+        public int ViewCount { get; set; }
+        public int ListenCount { get; set; }
+        public int Priority { get; set; }
     }
 }

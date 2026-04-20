@@ -1,5 +1,6 @@
 ﻿using TourGuideMauiApp.Services;
 using TourGuideMauiApp.ViewModels;
+using TourGuideMauiApp.Models;
 
 namespace TourGuideMauiApp.Views;
 
@@ -29,5 +30,14 @@ public partial class MainPage : ContentPage
     private async void OnRefreshClicked(object sender, EventArgs e)
     {
         await _viewModel.LoadPOIsAsync();
+    }
+    private async void OnPoiTapped(object sender, TappedEventArgs e)
+    {
+        var poi = e.Parameter as POIDTO;
+        if (poi == null) return;
+
+        // Điều hướng sang tab MapPage và truyền tham số poiId
+        // Sử dụng "//MapPage" để chuyển hẳn sang Tab bản đồ
+        await Shell.Current.GoToAsync($"//MapPage?poiId={poi.POIID}");
     }
 }

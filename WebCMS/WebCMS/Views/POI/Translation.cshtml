@@ -2,14 +2,14 @@
 @{
     ViewData["Title"] = "Nội dung đa ngôn ngữ";
     var langs = Model?.Select(t => t.LanguageCode).ToList() ?? new List<string>();
+
+    // CHỈ GIỮ 4 NGÔN NGỮ
     var allLangs = new[] { "vi", "en", "fr", "ja" };
     var langFlags = new Dictionary<string, string> {
-        {"vi","🇻🇳"},{"en","🇬🇧"},{"fr","🇫🇷"},{"ja","🇯🇵"},
-        {"ko","🇰🇷"},{"ru","🇷🇺"},{"ch","🇨🇳"}
+        {"vi","🇻🇳"}, {"en","🇬🇧"}, {"fr","🇫🇷"}, {"ja","🇯🇵"}
     };
 }
 
-<!-- Back + Header -->
 <div class="page-header">
     <div class="page-header-left">
         <a asp-controller="POI" asp-action="Index" class="btn-outline-admin" style="margin-bottom:10px;display:inline-flex">
@@ -18,12 +18,11 @@
         <h1>Bản dịch — POI #@ViewBag.POIID</h1>
         <p>Quản lý nội dung thuyết minh theo từng ngôn ngữ</p>
     </div>
-    <a href="/POI/AddTranslation?poiId=@ViewBag.POIID" class="btn-primary-admin"> + Thêm bản dịch
+    <a href="/POI/AddTranslation?poiId=@ViewBag.POIID" class="btn-primary-admin">
+        <i class="fa-solid fa-plus"></i> Thêm bản dịch
     </a>
-
 </div>
 
-<!-- Language coverage -->
 <div class="admin-card" style="margin-bottom:20px;padding:18px 24px">
     <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;color:var(--text-muted);margin-bottom:10px">
         Ngôn ngữ đã có
@@ -47,7 +46,6 @@
     </div>
 </div>
 
-<!-- Translations table -->
 <div class="admin-card">
     <div class="admin-card-header">
         <span class="admin-card-title">Danh sách bản dịch (@langs.Count)</span>
@@ -58,11 +56,10 @@
             <table class="admin-table">
                 <thead>
                     <tr>
-                        <th>Ngôn ngữ</th>
+                        <th style="width:120px">Ngôn ngữ</th>
                         <th>Tên hiển thị</th>
-                        <th>Mô tả ngắn</th>
                         <th>Nội dung thuyết minh</th>
-                        <th style="width:80px;text-align:center">Xóa</th>
+                        <th style="width:120px;text-align:center">Hành động</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -71,27 +68,30 @@
                         <tr>
                             <td>
                                 <span class="lang-chip" style="background:var(--accent-light);border-color:var(--accent-border);color:var(--accent)">
-                                    @(langFlags.GetValueOrDefault(t.LanguageCode, "🌐"))
-                                    @t.LanguageCode.ToUpper()
+                                    @(langFlags.GetValueOrDefault(t.LanguageCode, "🌐")) @t.LanguageCode.ToUpper()
                                 </span>
                             </td>
-                            <td><span class="table-truncate" style="max-width:180px;display:block;font-weight:600">@t.DisplayName</span></td>
-                            <td><span class="table-truncate" style="max-width:200px;display:block;color:var(--text-muted)">@t.ShortDescription</span></td>
                             <td>
-                                <span class="narration-preview">
-                                    @(t.NarrationText?.Length > 80
-                                                                ? t.NarrationText.Substring(0, 80) + "..."
-                                                                : t.NarrationText ?? "–")
-                        </span>
-                    </td>
-                    <td style="text-align:center">
-                        <a href="~/POI/DeleteTranslation?poiId=@t.POIID&lang=@t.LanguageCode" class="btn-icon-admin danger" onclick="return confirm('Xóa bản dịch @t.LanguageCode.ToUpper() này?')" title="Xóa bản dịch">
-                            <i class="fa-solid fa-trash"></i>
-                        </a>
-
-                    </td>
-                </tr>
-                                }
+                                <div style="font-weight:600;color:var(--text)">@t.DisplayName</div>
+                                <div style="font-size:12px;color:var(--text-muted)">@t.ShortDescription</div>
+                            </td>
+                            <td>
+                                <span class="narration-preview" style="display:block;max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
+                                    @t.NarrationText
+                                </span>
+                            </td>
+                            <td style="text-align:center;">
+                                <div style="display:flex; gap:10px; justify-content:center;">
+                                    <a href="/POI/EditTranslation?poiId=@t.POIID&lang=@t.LanguageCode" class="btn-icon-admin" style="color:#0ea5e9; font-size:18px" title="Sửa bản dịch">
+                                        <i class="fa-solid fa-pen-to-square"></i>
+                                    </a>
+                                    <a href="/POI/DeleteTranslation?poiId=@t.POIID&lang=@t.LanguageCode" class="btn-icon-admin danger" style="color:#ef4444; font-size:18px" onclick="return confirm('Bạn có chắc chắn muốn xóa bản dịch @t.LanguageCode.ToUpper() này không?')" title="Xóa bản dịch">
+                                        <i class="fa-solid fa-trash"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                    }
                 </tbody>
             </table>
         }

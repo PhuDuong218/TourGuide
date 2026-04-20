@@ -12,6 +12,12 @@ namespace WebCMS.Services
             _http = http;
         }
 
+        public async Task<List<POITranslation>> GetAllAsync()
+        {
+            return await _http.GetFromJsonAsync<List<POITranslation>>("Translation")
+                   ?? new List<POITranslation>();
+        }
+
         public async Task<List<POITranslation>> GetByPOIAsync(string id)
         {
             return await _http.GetFromJsonAsync<List<POITranslation>>($"Translation/{id}")
@@ -21,6 +27,12 @@ namespace WebCMS.Services
         public async Task CreateAsync(POITranslation t)
         {
             await _http.PostAsJsonAsync("Translation", t);
+        }
+
+        // Hàm cập nhật (Dùng cho chức năng Sửa bản dịch)
+        public async Task UpdateAsync(POITranslation t)
+        {
+            await _http.PutAsJsonAsync($"Translation/{t.TranslationID}", t);
         }
 
         public async Task DeleteAsync(string poiId, string lang)

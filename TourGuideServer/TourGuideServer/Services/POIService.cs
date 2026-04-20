@@ -19,12 +19,6 @@ namespace TourGuideServer.Services
             var byLang = p.Translations.Where(t => t.LanguageCode == lang).ToList();
             var any = p.Translations.ToList();
 
-            
-            var baseUrl = "http://192.168.1.144:5015";
-            var imgPath = string.IsNullOrEmpty(p.Img)
-                ? "https://via.placeholder.com/300"
-                : $"{baseUrl}/uploads/{p.Img}";
-
             return new POIDTO
             {
                 POIID = p.POIID,
@@ -32,23 +26,33 @@ namespace TourGuideServer.Services
                 Longitude = p.Longitude,
                 Address = p.Address,
                 Category = p.Category,
-                ImageUrl = imgPath, 
+                Img = p.Img,
 
-                Name = byLang.Select(t => t.DisplayName).FirstOrDefault()
+                // Gán đúng vào RestaurantName (Ưu tiên tên dịch, nếu không có lấy tên gốc)
+                RestaurantName = byLang.Select(t => t.DisplayName).FirstOrDefault()
                     ?? any.Select(t => t.DisplayName).FirstOrDefault()
+                    ?? p.RestaurantName
                     ?? "Chưa đặt tên",
 
-                Description = byLang.Select(t => t.ShortDescription).FirstOrDefault()
+                ShortDescription = byLang.Select(t => t.ShortDescription).FirstOrDefault()
                     ?? any.Select(t => t.ShortDescription).FirstOrDefault()
                     ?? "Không có mô tả",
 
-                Narration = byLang.Select(t => t.NarrationText).FirstOrDefault() ?? ""
+                NarrationText = byLang.Select(t => t.NarrationText).FirstOrDefault() ?? ""
             };
         }
 
-        public async Task<List<POIDTO>> GetPOIsAsync(string lang)
+        // Đã thêm tham số ownerId vào đây để Controller có thể dùng
+        public async Task<List<POIDTO>> GetPOIsAsync(string lang, string? ownerId = null)
         {
-            var pois = await _context.POIs.Include(p => p.Translations).ToListAsync();
+            var query = _context.POIs.Include(p => p.Translations).AsQueryable();
+
+            if (!string.IsNullOrEmpty(ownerId))
+            {
+                query = query.Where(p => p.OwnerID == ownerId);
+            }
+
+            var pois = await query.OrderByDescending(p => p.POIID).ToListAsync();
             return pois.Select(p => MapToDTO(p, lang ?? "vi")).ToList();
         }
 
@@ -72,7 +76,7 @@ namespace TourGuideServer.Services
         {
             var history = new VisitHistory
             {
-                VisitID = Guid.NewGuid().ToString().Substring(0, 10), 
+                VisitID = Guid.NewGuid().ToString().Substring(0, 10),
                 UserID = userId,
                 POIID = poiId,
                 VisitTime = DateTime.Now,

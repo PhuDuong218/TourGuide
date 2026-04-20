@@ -4,115 +4,118 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:vm="clr-namespace:TourGuideMauiApp.ViewModels"
     xmlns:models="clr-namespace:TourGuideMauiApp.Models"
+    xmlns:converters="clr-namespace:TourGuideMauiApp.Converters"
     x:Class="TourGuideMauiApp.Views.MainPage"
     x:DataType="vm:MainPageViewModel"
-    Title="Danh sách địa điểm"
+    Title="Khám phá"
     BackgroundColor="#F5F5F5">
+    
+    <ContentPage.Resources>
+        <converters:ImageUrlConverter x:Key="ImgConverter" />
+    </ContentPage.Resources>
 
     <Grid RowDefinitions="Auto,*,Auto">
 
-        <!-- Header — dùng Border thay Frame (.NET 9) -->
-        <Border Grid.Row="0"
-                BackgroundColor="#6200EE"
-                StrokeThickness="0"
-                Padding="16,12">
+        <Border Grid.Row="0" BackgroundColor="#6200EE" StrokeThickness="0" Padding="16,12">
             <Grid ColumnDefinitions="*,Auto">
                 <VerticalStackLayout Grid.Column="0" Spacing="2">
-                    <Label Text="🗺 Địa điểm du lịch"
-                           FontSize="20" FontAttributes="Bold" TextColor="White"/>
-                    <Label Text="{Binding POIs.Count, StringFormat='{0} địa điểm'}"
-                           FontSize="13" TextColor="#E0D0FF"/>
+                    <Label Text="🗺 Khám phá các địa điểm" FontSize="20" FontAttributes="Bold" TextColor="White"/>
+                    <Label Text="{Binding TotalCount, StringFormat='{0} địa điểm'}" FontSize="13" TextColor="#E0D0FF"/>
                 </VerticalStackLayout>
-                <Button Grid.Column="1"
-                        Text="↻ Tải lại"
-                        Clicked="OnRefreshClicked"
-                        BackgroundColor="#7C3AED"
-                        TextColor="White"
-                        CornerRadius="20"
-                        Padding="14,8"
-                        FontSize="13"
-                        IsEnabled="{Binding IsNotLoading}"/>
+                <Button Grid.Column="1" Text="↻ Tải lại" Clicked="OnRefreshClicked"
+                        BackgroundColor="#7C3AED" TextColor="White" CornerRadius="20"
+                        Padding="14,8" FontSize="13" IsEnabled="{Binding IsNotLoading}"/>
             </Grid>
         </Border>
 
-        <!-- Loading -->
-        <VerticalStackLayout Grid.Row="1"
-                             IsVisible="{Binding IsLoading}"
-                             VerticalOptions="Center"
-                             HorizontalOptions="Center"
-                             Spacing="12">
-            <ActivityIndicator IsRunning="{Binding IsLoading}"
-                               Color="#6200EE"
-                               WidthRequest="48" HeightRequest="48"/>
-            <Label Text="Đang tải dữ liệu..."
-                   FontSize="15" TextColor="#888" HorizontalOptions="Center"/>
+        <VerticalStackLayout Grid.Row="1" IsVisible="{Binding IsLoading}" VerticalOptions="Center" HorizontalOptions="Center" Spacing="12">
+            <ActivityIndicator IsRunning="{Binding IsLoading}" Color="#6200EE" WidthRequest="48" HeightRequest="48"/>
+            <Label Text="Đang tìm địa điểm quanh bạn..." FontSize="15" TextColor="#888" HorizontalOptions="Center"/>
         </VerticalStackLayout>
 
-        <!-- Empty state -->
-        <VerticalStackLayout Grid.Row="1"
-                             IsVisible="{Binding IsEmpty}"
-                             VerticalOptions="Center"
-                             HorizontalOptions="Center"
-                             Spacing="12">
+        <VerticalStackLayout Grid.Row="1" IsVisible="{Binding IsEmpty}" VerticalOptions="Center" HorizontalOptions="Center" Spacing="12">
             <Label Text="📍" FontSize="48" HorizontalOptions="Center"/>
-            <Label Text="Chưa có địa điểm nào"
-                   FontSize="16" TextColor="#888" HorizontalOptions="Center"/>
-            <Label Text="Nhấn 'Tải lại' để thử lại"
-                   FontSize="13" TextColor="#AAA" HorizontalOptions="Center"/>
+            <Label Text="Chưa có địa điểm nào" FontSize="16" TextColor="#888" HorizontalOptions="Center"/>
+            <Label Text="Nhấn 'Tải lại' để thử lại" FontSize="13" TextColor="#AAA" HorizontalOptions="Center"/>
         </VerticalStackLayout>
 
-        <!-- Danh sách POI -->
-        <CollectionView Grid.Row="1"
-                        ItemsSource="{Binding POIs}"
-                        IsVisible="{Binding HasData}"
-                        Margin="12,8">
-            <CollectionView.ItemTemplate>
-                <DataTemplate x:DataType="models:POIDTO">
-                    <!-- Border thay Frame -->
-                    <Border Margin="0,6"
-                            BackgroundColor="White"
-                            StrokeShape="RoundRectangle 12"
-                            StrokeThickness="0">
-                        <Grid ColumnDefinitions="6,*">
-                            <BoxView Grid.Column="0"
-                                     BackgroundColor="#6200EE"
-                                     CornerRadius="6"/>
-                            <VerticalStackLayout Grid.Column="1"
-                                                 Padding="14,12" Spacing="4">
-                                <Label Text="{Binding Name}"
-                                       FontAttributes="Bold" FontSize="15"
-                                       TextColor="#1A1A2E"
-                                       LineBreakMode="TailTruncation"/>
-                                <Label Text="{Binding Description}"
-                                       FontSize="13" TextColor="#555"
-                                       MaxLines="2"
-                                       LineBreakMode="TailTruncation"/>
-                                <Label Text="{Binding Address}"
-                                       FontSize="12" TextColor="#777"
-                                       MaxLines="1"
-                                       LineBreakMode="TailTruncation"/>
-                                <Grid ColumnDefinitions="*,*" Margin="0,4,0,0">
-                                    <Label Grid.Column="0" FontSize="11" TextColor="#6200EE" FontAttributes="Bold"
-                                           Text="{Binding DistanceText}"/>
-                                    <Label Grid.Column="1" FontSize="11" TextColor="#999" HorizontalOptions="End"
-                                           Text="{Binding Latitude, StringFormat='📍 {0:F4}°N'}"/>
-                                </Grid>
-                            </VerticalStackLayout>
-                        </Grid>
-                    </Border>
-                </DataTemplate>
-            </CollectionView.ItemTemplate>
-        </CollectionView>
+        <ScrollView Grid.Row="1" IsVisible="{Binding HasData}">
+            <VerticalStackLayout Spacing="24" Padding="0,16,0,30">
 
-        <!-- Error bar -->
-        <Border Grid.Row="2"
-                IsVisible="{Binding HasError}"
-                BackgroundColor="#FFEBEE"
-                StrokeShape="RoundRectangle 0"
-                StrokeThickness="0"
-                Padding="16,10">
-            <Label Text="{Binding ErrorMessage}"
-                   TextColor="#C62828" FontSize="13"/>
+                <VerticalStackLayout Spacing="12" Padding="16,0">
+
+                    <Grid ColumnDefinitions="*,Auto">
+                        <Label Grid.Column="0" Text="🌟 Có thể bạn sẽ thích" FontSize="18" FontAttributes="Bold" TextColor="#1A1A2E" VerticalOptions="Center"/>
+                        <Button Grid.Column="1" Text="{Binding FeaturedButtonText}" Command="{Binding ToggleFeaturedCommand}" BackgroundColor="Transparent" TextColor="#6200EE" FontSize="14" FontAttributes="Bold" Padding="0" VerticalOptions="Center"/>
+                    </Grid>
+
+                    <VerticalStackLayout BindableLayout.ItemsSource="{Binding FeaturedPOIs}" Spacing="16">
+                        <BindableLayout.ItemTemplate>
+                            <DataTemplate x:DataType="models:POIDTO">
+                                <Border BackgroundColor="White" StrokeShape="RoundRectangle 16" StrokeThickness="0">
+                                    <Border.GestureRecognizers>
+                                        <TapGestureRecognizer Tapped="OnPoiTapped" CommandParameter="{Binding .}"/>
+                                    </Border.GestureRecognizers>
+                                    <Border.Shadow>
+                                        <Shadow Brush="Black" Offset="0,4" Radius="8" Opacity="0.08"/>
+                                    </Border.Shadow>
+                                    <Grid RowDefinitions="180, Auto">
+                                        <Image Grid.Row="0" Source="{Binding Img, Converter={StaticResource ImgConverter}}" Aspect="AspectFill" HeightRequest="180"/>
+
+                                        <VerticalStackLayout Grid.Row="1" Padding="16,12" Spacing="4">
+                                            <Label Text="{Binding RestaurantName}" FontAttributes="Bold" FontSize="16" TextColor="#1A1A2E" LineBreakMode="TailTruncation"/>
+                                            <Label Text="{Binding CategoryName, TargetNullValue='Điểm đến hấp dẫn'}" FontSize="13" TextColor="#6200EE" FontAttributes="Bold"/>
+                                            <Label Text="{Binding ShortDescription}" FontSize="13" TextColor="#555" MaxLines="2" LineBreakMode="TailTruncation"/>
+                                        </VerticalStackLayout>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </BindableLayout.ItemTemplate>
+                    </VerticalStackLayout>
+                </VerticalStackLayout>
+
+                <BoxView HeightRequest="1" BackgroundColor="#E0E0E0" Margin="16,8"/>
+
+                <VerticalStackLayout Spacing="12" Padding="16,0">
+
+                    <Grid ColumnDefinitions="*,Auto">
+                        <Label Grid.Column="0" Text="📍 Địa điểm gần bạn" FontSize="18" FontAttributes="Bold" TextColor="#1A1A2E" VerticalOptions="Center"/>
+                        <Button Grid.Column="1" Text="{Binding NearbyButtonText}" Command="{Binding ToggleNearbyCommand}" BackgroundColor="Transparent" TextColor="#6200EE" FontSize="14" FontAttributes="Bold" Padding="0" VerticalOptions="Center"/>
+                    </Grid>
+
+                    <VerticalStackLayout BindableLayout.ItemsSource="{Binding NearbyPOIs}" Spacing="12">
+                        <BindableLayout.ItemTemplate>
+                            <DataTemplate x:DataType="models:POIDTO">
+                                <Border BackgroundColor="White" StrokeShape="RoundRectangle 12" StrokeThickness="0">
+                                    <Border.GestureRecognizers>
+                                        <TapGestureRecognizer Tapped="OnPoiTapped" CommandParameter="{Binding .}"/>
+                                    </Border.GestureRecognizers>
+                                    <Border.Shadow>
+                                        <Shadow Brush="Black" Offset="0,2" Radius="4" Opacity="0.05"/>
+                                    </Border.Shadow>
+                                    <Grid ColumnDefinitions="100,*">
+                                        <Image Grid.Column="0" Source="{Binding Img, Converter={StaticResource ImgConverter}}" Aspect="AspectFill" Margin="0" HeightRequest="100"/>
+
+                                        <VerticalStackLayout Grid.Column="1" Padding="12,10" Spacing="4" VerticalOptions="Center">
+                                            <Label Text="{Binding RestaurantName}" FontAttributes="Bold" FontSize="15" TextColor="#1A1A2E" LineBreakMode="TailTruncation" MaxLines="1"/>
+                                            <Label Text="{Binding Address}" FontSize="12" TextColor="#777" MaxLines="1" LineBreakMode="TailTruncation"/>
+                                            <Grid ColumnDefinitions="*,Auto" Margin="0,4,0,0">
+                                                <Label Grid.Column="0" FontSize="12" TextColor="#6200EE" FontAttributes="Bold" Text="{Binding DistanceText}"/>
+                                                <Label Grid.Column="1" FontSize="11" TextColor="#999" VerticalOptions="End" Text="{Binding Latitude, StringFormat='📍 {0:F4}°N'}"/>
+                                            </Grid>
+                                        </VerticalStackLayout>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </BindableLayout.ItemTemplate>
+                    </VerticalStackLayout>
+                </VerticalStackLayout>
+
+            </VerticalStackLayout>
+        </ScrollView>
+
+        <Border Grid.Row="2" IsVisible="{Binding HasError}" BackgroundColor="#FFEBEE" StrokeShape="RoundRectangle 0" StrokeThickness="0" Padding="16,10">
+            <Label Text="{Binding ErrorMessage}" TextColor="#C62828" FontSize="13"/>
         </Border>
 
     </Grid>

@@ -73,10 +73,10 @@ public partial class ScannerPage : ContentPage
             }
 
             _currentPOI = found;
-            resultTitle.Text = found.Name;
+            resultTitle.Text = found.RestaurantName;
             resultDescription.Text = string.IsNullOrEmpty(found.Address)
-                ? found.Description
-                : $"{found.Description}\n📍 {found.Address}";
+                ? found.ShortDescription
+                : $"{found.ShortDescription}\n📍 {found.Address}";
             resultFrame.IsVisible = true;
 
             // --- ĐOẠN CODE GỬI LỊCH SỬ ĐÃ ĐƯỢC ĐẶT ĐÚNG CHỖ ---
@@ -103,8 +103,8 @@ public partial class ScannerPage : ContentPage
             // ---------------------------------------------------
 
             // Tự động phát thuyết minh
-            var narration = string.IsNullOrEmpty(found.Narration)
-                ? found.Description : found.Narration;
+            var narration = string.IsNullOrEmpty(found.NarrationText)
+                ? found.ShortDescription : found.NarrationText;
 
             await _ttsService.SpeakAsync(narration);
 
@@ -130,8 +130,8 @@ public partial class ScannerPage : ContentPage
     {
         if (_currentPOI == null) return;
 
-        var narration = string.IsNullOrEmpty(_currentPOI.Narration)
-            ? _currentPOI.Description : _currentPOI.Narration;
+        var narration = string.IsNullOrEmpty(_currentPOI.NarrationText)
+            ? _currentPOI.ShortDescription : _currentPOI.NarrationText;
 
         btnSpeak.IsEnabled = false;
         btnSpeak.Text = "🔊 Đang phát...";

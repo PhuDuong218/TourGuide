@@ -17,8 +17,8 @@
             // Kiểm tra tài khoản đơn giản (Sau này bạn có thể lấy từ Database)
             if (username == "admin" && password == "123456")
             {
-                // Nếu đúng, chuyển hướng vào trang danh sách POI
-                return RedirectToAction("Index", "POI");
+                // Nếu đúng, chuyển hướng vào trang dashboard
+                return RedirectToAction("Index", "Home");
             }
 
             // Nếu sai, báo lỗi và ở lại trang Login

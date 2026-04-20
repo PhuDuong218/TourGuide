@@ -1,0 +1,97 @@
+﻿@model List<WebCMS.Models.OwnerRequest>
+@{
+    ViewData["Title"] = "Duyệt yêu cầu đăng ký Chủ quán";
+}
+
+<div class="page-header" style="margin-bottom: 25px;">
+    <div>
+        <h1 style="font-size: 24px; font-weight: 800; color: #111827;">Yêu cầu đối tác</h1>
+        <p style="color: #6b7280; font-size: 14px; margin-top: 4px;">Quản lý và xét duyệt các lượt đăng ký trở thành chủ quán từ App</p>
+    </div>
+</div>
+
+<div class="admin-card" style="background: white; border-radius: 12px; box-shadow: 0 2px 15px rgba(0,0,0,0.08); overflow: hidden;">
+    <div class="admin-card-header" style="padding: 20px; border-bottom: 1px solid #f3f4f6; display: flex; justify-content: space-between; align-items: center;">
+        <span class="admin-card-title" style="font-size: 18px; font-weight: 600; color: #111827;">
+            Danh sách chờ duyệt (@(Model?.Count(m => m.Status == "Pending") ?? 0))
+        </span>
+    </div>
+
+    <div class="admin-card-body" style="padding: 0;">
+        @if (Model != null && Model.Any())
+        {
+            <table class="admin-table" style="width: 100%; border-collapse: collapse;">
+                <thead style="background: #f9fafb;">
+                    <tr>
+                        <th style="padding: 12px 20px; text-align: left; color: #4b5563; font-weight: 600; font-size: 13px;">ID</th>
+                        <th style="padding: 12px 20px; text-align: left; color: #4b5563; font-weight: 600; font-size: 13px;">Người đăng ký</th>
+                        <th style="padding: 12px 20px; text-align: left; color: #4b5563; font-weight: 600; font-size: 13px;">Thông tin địa điểm</th>
+                        <th style="padding: 12px 20px; text-align: left; color: #4b5563; font-weight: 600; font-size: 13px;">Trạng thái</th>
+                        <th style="padding: 12px 20px; text-align: center; color: #4b5563; font-weight: 600; font-size: 13px;">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody style="font-size: 14px;">
+                    @foreach (var req in Model)
+                    {
+                        <tr style="border-bottom: 1px solid #f3f4f6;">
+                            <td style="padding: 12px 20px;"><span style="color: #9ca3af; font-family: monospace;">#@req.RequestID</span></td>
+
+                            <td style="padding: 12px 20px;">
+                                <div style="font-weight: 600; color: #111827;">@req.FullName</div>
+                                <div style="font-size: 12px; color: #6b7280;"><i class="fa-solid fa-phone" style="font-size:10px"></i> @req.Phone</div>
+                                @if (!string.IsNullOrEmpty(req.Email))
+                                {
+                                    <div style="font-size: 12px; color: #6b7280;"><i class="fa-solid fa-envelope" style="font-size:10px"></i> @req.Email</div>
+                                }
+                            </td>
+
+                            <td style="padding: 12px 20px;">
+                                <div style="font-weight: 600; color: #1d4ed8;">@req.PlaceName</div>
+                                <div style="font-size: 12px; color: #6b7280; max-width: 250px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                    <i class="fa-solid fa-location-dot" style="font-size:10px"></i> @req.Address
+                                </div>
+                            </td>
+
+                            <td style="padding: 12px 20px;">
+                                @if (req.Status == "Pending")
+                                {
+                                    <span style="background: #fef3c7; color: #d97706; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 600;">⏳ Chờ duyệt</span>
+                                }
+                                else if (req.Status == "Approved")
+                                {
+                                    <span style="background: #d1fae5; color: #059669; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 600;">✅ Đã duyệt</span>
+                                }
+                                else
+                                {
+                                    <span style="background: #fee2e2; color: #dc2626; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 600;">❌ Từ chối</span>
+                                }
+                            </td>
+
+                            <td style="padding: 12px 20px; text-align: center;">
+                                @if (req.Status == "Pending")
+                                {
+                                    <div style="display: flex; gap: 8px; justify-content: center;">
+                                        <form asp-action="Approve" asp-route-id="@req.RequestID" method="post" style="display:inline;">
+                                            <button type="submit" style="background: #10b981; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600;">
+                                                Duyệt
+                                            </button>
+                                        </form>
+                                        <form asp-action="Reject" asp-route-id="@req.RequestID" method="post" style="display:inline;" onsubmit="return confirm('Xác nhận từ chối yêu cầu này?');">
+                                            <button type="submit" style="background: #ef4444; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600;">
+                                                Từ chối
+                                            </button>
+                                        </form>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <span style="color: #9ca3af; font-size: 12px;">Đã xử lý</span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+    </div>
+</div>

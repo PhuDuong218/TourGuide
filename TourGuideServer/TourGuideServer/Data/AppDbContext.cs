@@ -13,7 +13,7 @@ namespace TourGuideServer.Data
         public DbSet<Language> Languages { get; set; }
         public DbSet<VisitHistory> VisitHistories { get; set; }
         public DbSet<QRCode> QRCodes { get; set; }
-
+        public DbSet<OwnerRequest> OwnerRequests { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);

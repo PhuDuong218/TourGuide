@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="TourGuideMauiApp.Views.RegisterPage"
+             Title="Đăng ký tài khoản"
+             BackgroundColor="#f4f7fe">
+
+    <ScrollView>
+        <VerticalStackLayout Spacing="20" Padding="30" VerticalOptions="Center">
+
+            <Label Text="Tạo tài khoản mới" FontSize="24" FontAttributes="Bold" 
+                   TextColor="#004581" HorizontalOptions="Center" />
+
+            <Border Stroke="Transparent" Padding="20" BackgroundColor="White">
+                <Border.StrokeShape>
+                    <RoundRectangle CornerRadius="12" />
+                </Border.StrokeShape>
+
+                <VerticalStackLayout Spacing="15">
+                    <Entry x:Name="txtRegFullName" Placeholder="Họ và tên" />
+
+                    <Entry x:Name="txtRegEmail" Placeholder="Địa chỉ Email" Keyboard="Email" />
+
+                    <Entry x:Name="txtRegUsername" Placeholder="Tên đăng nhập " />
+
+                    <Entry x:Name="txtRegPassword" Placeholder="Mật khẩu" IsPassword="True" />
+                    <Entry x:Name="txtRegConfirmPassword" Placeholder="Xác nhận mật khẩu" IsPassword="True" />
+
+                    <Button Text="Đăng ký ngay" 
+                            BackgroundColor="#004581" 
+                            TextColor="White" 
+                            CornerRadius="8" 
+                            Clicked="OnRegisterSubmitClicked" />
+                </VerticalStackLayout>
+            </Border>
+
+            <Button Text="Quay lại Đăng nhập" 
+                    BackgroundColor="Transparent" 
+                    TextColor="Gray" 
+                    Clicked="OnBackClicked" />
+
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

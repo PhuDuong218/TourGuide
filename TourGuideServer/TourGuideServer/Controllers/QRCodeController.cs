@@ -17,10 +17,18 @@ namespace TourGuideServer.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAll()
+        public async Task<IActionResult> GetAll([FromQuery] string? ownerId)
         {
-            var qrs = await _context.QRCodes
+            var query = _context.QRCodes
                 .Include(q => q.POI)
+                .AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(ownerId))
+            {
+                query = query.Where(q => q.POI != null && q.POI.OwnerID == ownerId);
+            }
+
+            var qrs = await query
                 .OrderBy(q => q.POIID)
                 .Select(q => new {
                     q.QRID,
@@ -80,7 +88,6 @@ namespace TourGuideServer.Controllers
 
             _context.QRCodes.Add(qr);
             await _context.SaveChangesAsync();
-
             return Ok(new { message = "Tạo mã QR thành công!", data = qr });
         }
 

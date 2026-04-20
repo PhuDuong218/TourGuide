@@ -1,0 +1,22 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="TourGuideMauiApp.Views.RegisterOwnerPage"
+             Title="Đăng ký đối tác" BackgroundColor="#F5F5F5">
+	<ScrollView>
+		<VerticalStackLayout Spacing="15" Padding="20">
+			<Label Text="Thông tin chủ quán" FontSize="18" FontAttributes="Bold" TextColor="#6200EE"/>
+
+			<Entry x:Name="txtName" Placeholder="Họ và tên *" BackgroundColor="White"/>
+			<Entry x:Name="txtPhone" Placeholder="Số điện thoại *" Keyboard="Telephone" BackgroundColor="White"/>
+			<Entry x:Name="txtEmail" Placeholder="Email" Keyboard="Email" BackgroundColor="White"/>
+
+			<Label Text="Thông tin địa điểm" FontSize="18" FontAttributes="Bold" TextColor="#6200EE" Margin="0,10,0,0"/>
+
+			<Entry x:Name="txtPlace" Placeholder="Tên quán/Địa điểm *" BackgroundColor="White"/>
+			<Entry x:Name="txtAddress" Placeholder="Địa chỉ cụ thể" BackgroundColor="White"/>
+
+			<Button Text="Gửi yêu cầu" Clicked="OnSubmitClicked" BackgroundColor="#6200EE" TextColor="White" Margin="0,20"/>
+		</VerticalStackLayout>
+	</ScrollView>
+</ContentPage>
