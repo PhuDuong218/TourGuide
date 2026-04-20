@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace WebCMS.Controllers
 {
@@ -14,16 +15,14 @@ namespace WebCMS.Controllers
         public IActionResult Index()
         {
             var apiUrl = _configuration["ApiSettings:BaseUrl"];
+            ViewBag.ApiUrl = string.IsNullOrEmpty(apiUrl) ? "https://gzm4vrwg-7054.asse.devtunnels.ms/api/" : apiUrl;
 
-            //  Kiểm tra nếu chưa cấu hình thì báo lỗi hoặc gán mặc định để tránh crash JS
-            if (string.IsNullOrEmpty(apiUrl))
-            {
-                ViewBag.ApiUrl = "https://gzm4vrwg-7054.asse.devtunnels.ms/api/"; // Giá trị dự phòng
-            }
-            else
-            {
-                ViewBag.ApiUrl = apiUrl;
-            }
+            var currentUserId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                                ?? HttpContext.Session.GetString("UserID");
+            var userRole = User.IsInRole("owner") ? "owner" : HttpContext.Session.GetString("Role");
+
+            ViewBag.CurrentUserId = currentUserId;
+            ViewBag.UserRole = userRole;
 
             return View();
         }
@@ -31,6 +30,14 @@ namespace WebCMS.Controllers
         {
             var apiUrl = _configuration["ApiSettings:BaseUrl"];
             ViewBag.ApiUrl = string.IsNullOrEmpty(apiUrl) ? "https://gzm4vrwg-7054.asse.devtunnels.ms/api/" : apiUrl;
+
+            var currentUserId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                                ?? HttpContext.Session.GetString("UserID");
+            var userRole = User.IsInRole("owner") ? "owner" : HttpContext.Session.GetString("Role");
+
+            ViewBag.CurrentUserId = currentUserId;
+            ViewBag.UserRole = userRole;
+
             return View();
         }
     }

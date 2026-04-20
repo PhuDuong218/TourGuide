@@ -1,54 +1,53 @@
+using Microsoft.AspNetCore.Authentication.Cookies;
 using WebCMS.Models;
 using WebCMS.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// 🔥 1. LẤY URL API TỪ appsettings.json
+// 1. LẤY URL API
 var apiUrl = builder.Configuration["ApiSettings:BaseUrl"];
-
-// 🔥 2. CHỐNG NULL (QUAN TRỌNG)
 if (string.IsNullOrEmpty(apiUrl))
 {
-    throw new Exception("❌ Lỗi: ApiSettings:BaseUrl chưa được cấu hình trong appsettings.json");
+    // Dự phòng nếu appsettings.json trống
+    apiUrl = "https://gzm4vrwg-7054.asse.devtunnels.ms/api/";
 }
 
-// 🔥 3. ADD MVC
+// 2. ADD SERVICES
 builder.Services.AddControllersWithViews();
-builder.Services.AddControllers();
+builder.Services.AddScoped<TranslationService>();
 
-// 🔥 4. CẤU HÌNH HTTPCLIENT GỌI API (ĐĂNG KÝ CÁC DỊCH VỤ)
-// Đăng ký StatsService
-builder.Services.AddHttpClient<StatsService>(client =>
+// Cấu hình Session (QUAN TRỌNG)
+builder.Services.AddDistributedMemoryCache();
+builder.Services.AddSession(options =>
 {
-    client.BaseAddress = new Uri(apiUrl);
-});
-// Đăng ký POIService
-builder.Services.AddHttpClient<IPOIService, POIService>(client =>
-{
-    client.BaseAddress = new Uri(apiUrl);
+    options.IdleTimeout = TimeSpan.FromMinutes(60);
+    options.Cookie.HttpOnly = true;
+    options.Cookie.IsEssential = true;
 });
 
-// Đăng ký TranslationService
-builder.Services.AddHttpClient<TranslationService>(client =>
-{
-    client.BaseAddress = new Uri(apiUrl);
+builder.Services.AddHttpContextAccessor();
+
+// Cấu hình HttpClient dùng chung apiUrl
+builder.Services.AddHttpClient<IVisitHistoryService, VisitHistoryService>(client => {
+    client.BaseAddress = new Uri(apiUrl.Replace("/api/", "/")); // Trỏ về root server
 });
 
-// ✅ Đăng ký OwnerRequestService (MỚI)
-builder.Services.AddHttpClient<OwnerRequestService>(client =>
-{
+builder.Services.AddHttpClient<IPOIService, POIService>(client => {
     client.BaseAddress = new Uri(apiUrl);
 });
 
-// ✅ Đăng ký VisitHistoryService (MỚI)
-builder.Services.AddHttpClient<VisitHistoryService>(client =>
-{
-    client.BaseAddress = new Uri(apiUrl);
-});
+// AUTH
+builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+    .AddCookie(options => {
+        options.LoginPath = "/Account/Login";
+        options.AccessDeniedPath = "/Account/AccessDenied";
+    });
+
+builder.Services.AddAuthorization();
 
 var app = builder.Build();
 
-// 🔥 5. PIPELINE (Cấu hình luồng xử lý)
+// 4. PIPELINE
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
@@ -58,10 +57,12 @@ if (!app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();
-app.UseAuthorization();
-app.MapControllers();
 
-// 🔥 6. ROUTE
+// THỨ TỰ PHẢI ĐÚNG: Session -> Auth -> Authorization
+app.UseSession();
+app.UseAuthentication();
+app.UseAuthorization();
+
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Account}/{action=Login}/{id?}");

@@ -43,3 +43,48 @@
         </tbody>
     </table>
 </div>
+
+@section Scripts {
+    <script>
+                async function loadHistory() {
+            const tbody = document.getElementById('historyTableBody');
+            try {
+                const response = await fetch('@apiUrl' + 'VisitHistory');
+                if (!response.ok) throw new Error("Network response was not ok");
+
+                // 🟢 Đổi từ const sang let để có thể gán lại dữ liệu sau khi lọc
+                let data = await response.json();
+        
+                const role = '@User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value';
+                const userId = '@User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value';
+
+                // 🔴 Thực hiện lọc nếu là Owner
+                if (role.toLowerCase() === "owner") {
+                    // Lưu ý: h.ownerID phải khớp với tên trường bạn thêm ở Controller (thường là camelCase)
+                    data = data.filter(h => h.ownerID === userId || h.ownerId === userId);
+                }
+
+                tbody.innerHTML = '';
+                if (data.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="4" class="text-center" style="padding:20px;">Không có dữ liệu lịch sử.</td></tr>';
+                    return;
+                }
+
+                data.forEach(h => {
+                    const row = `
+                        <tr style="border-bottom: 1px solid #f3f4f6;">
+                            <td style="padding: 12px; color: #6b7280;">${new Date(h.visitTime).toLocaleString()}</td>
+                            <td style="padding: 12px; font-weight: 600;">${h.poiName}</td>
+                            <td style="padding: 12px;">${h.username}</td>
+                            <td style="padding: 12px;"><i class="fa-solid fa-qrcode"></i> ${h.scanMethod || 'QR Scan'}</td>
+                        </tr>`;
+                    tbody.insertAdjacentHTML('beforeend', row);
+                });
+            } catch (e) {
+                console.error("Fetch error:", e);
+                tbody.innerHTML = '<tr><td colspan="4" class="text-center" style="color:red; padding:20px;">Lỗi kết nối API hoặc xử lý dữ liệu</td></tr>';
+            }
+        }
+        document.addEventListener('DOMContentLoaded', loadHistory);
+    </script>
+}

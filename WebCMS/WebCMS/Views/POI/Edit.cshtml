@@ -17,7 +17,8 @@
             </p>
         </div>
 
-        <form asp-action="Edit" asp-route-id="@Model.POIID" method="post" enctype="multipart/form-data">
+        <!-- ✅ FIX: Model.Id thay vì Model.POIID -->
+        <form asp-action="Edit" asp-route-id="@Model.Id" method="post" enctype="multipart/form-data">
 
             <input type="hidden" asp-for="Img" />
 
@@ -74,14 +75,14 @@
 
             <div class="form-group">
                 <label class="form-label-admin">Ảnh hiện tại</label>
-                @if (!string.IsNullOrEmpty(Model.Img))
+                @if (!string.IsNullOrEmpty(Model.Image))
                 {
                     <div style="margin-bottom:10px">
                         <img src="https://gzm4vrwg-7054.asse.devtunnels.ms/uploads/@Model.Img" alt="@Model.RestaurantName"
                              style="height:120px;border-radius:8px;border:1px solid var(--border);object-fit:cover" />
 
                         <div style="font-size:12px;color:var(--text-muted);margin-top:4px">
-                            <i class="fa-solid fa-file-image"></i> @Model.Img
+                            <i class="fa-solid fa-file-image"></i> @Model.Image
                         </div>
                     </div>
                 }

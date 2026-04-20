@@ -1,8 +1,11 @@
 ﻿@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
 @{
     var ctx = ViewContext.RouteData.Values["controller"]?.ToString() ?? "";
+    var role = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value;
 }
+
 <!DOCTYPE html>
+
 <html lang="vi">
 <head>
     <meta charset="utf-8" />
@@ -18,6 +21,7 @@
 <body>
     <div class="shell">
 
+        ```
         <!-- ══ SIDEBAR ══ -->
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-brand">
@@ -28,44 +32,79 @@
                 </div>
             </div>
 
+            <!-- 🔴 NỘI DUNG -->
             <div class="sidebar-section-label">Nội dung</div>
             <nav class="sidebar-nav">
-                <a asp-controller="Home" asp-action="Index" class="nav-link-item @(ctx == "Home" ? "active" : "")">
-                    <span class="nav-icon"><i class="fa-solid fa-gauge-high"></i></span>
-                    <span class="nav-label">Tổng quan</span>
-                </a>
-                <a asp-controller="POI" asp-action="Index" class="nav-link-item @(ctx == "POI" ? "active" : "")">
-                    <span class="nav-icon"><i class="fa-solid fa-map-pin"></i></span>
-                    <span class="nav-label">Điểm tham quan</span>
-                </a>
-                <a asp-controller="QRCode" asp-action="Index" class="nav-link-item @(ctx == "QRCode" ? "active" : "")">
-                    <span class="nav-icon"><i class="fa-solid fa-qrcode"></i></span>
-                    <span class="nav-label">Mã QR</span>
-                </a>
+
+                @* OWNER *@
+                @if (User.IsInRole("owner"))
+                {
+                    <a asp-controller="POI" asp-action="Index" class="nav-link-item @(ctx == "POI" ? "active" : "")">
+                        <span class="nav-icon"><i class="fa-solid fa-map-pin"></i></span>
+                        <span class="nav-label">POI của tôi</span>
+                    </a>
+
+                    <a asp-controller="QRCode" asp-action="Index" class="nav-link-item @(ctx == "QRCode" ? "active" : "")">
+                        <span class="nav-icon"><i class="fa-solid fa-qrcode"></i></span>
+                        <span class="nav-label">Mã QR</span>
+                    </a>
+                }
+
+                @* ADMIN *@
+                @if (User.IsInRole("admin"))
+                {
+                    <a asp-controller="POI" asp-action="Index" class="nav-link-item @(ctx == "POI" ? "active" : "")">
+                        <span class="nav-icon"><i class="fa-solid fa-map-pin"></i></span>
+                        <span class="nav-label">Tất cả POI</span>
+                    </a>
+
+                    <a asp-controller="QRCode" asp-action="Index" class="nav-link-item @(ctx == "QRCode" ? "active" : "")">
+                        <span class="nav-icon"><i class="fa-solid fa-qrcode"></i></span>
+                        <span class="nav-label">Mã QR</span>
+                    </a>
+                }
+
             </nav>
 
+            <!-- 🔴 PHÂN TÍCH -->
             <div class="sidebar-section-label">Phân tích</div>
             <nav class="sidebar-nav">
-                <a asp-controller="VisitHistory" asp-action="Index" class="nav-link-item @(ctx == "VisitHistory" ? "active" : "")">
-                    <span class="nav-icon"><i class="fa-solid fa-chart-line"></i></span>
-                    <span class="nav-label">Lịch sử truy cập</span>
-                </a>
+
+                @if (User.IsInRole("owner"))
+                {
+                    <a asp-controller="VisitHistory" asp-action="Index" class="nav-link-item @(ctx == "VisitHistory" ? "active" : "")">
+                        <span class="nav-icon"><i class="fa-solid fa-chart-line"></i></span>
+                        <span class="nav-label">Lịch sử của tôi</span>
+                    </a>
+                }
+
+                @if (User.IsInRole("admin"))
+                {
+                    <a asp-controller="VisitHistory" asp-action="Index" class="nav-link-item @(ctx == "VisitHistory" ? "active" : "")">
+                        <span class="nav-icon"><i class="fa-solid fa-chart-line"></i></span>
+                        <span class="nav-label">Toàn bộ lịch sử</span>
+                    </a>
+                }
+
             </nav>
 
+            <!-- 🔴 HỆ THỐNG -->
             <div class="sidebar-section-label">Hệ thống</div>
             <nav class="sidebar-nav">
-                <a asp-controller="Users" asp-action="Index" class="nav-link-item @(ctx == "Users" ? "active" : "")">
-                    <span class="nav-icon"><i class="fa-solid fa-users"></i></span>
-                    <span class="nav-label">Quản lý người dùng</span>
-                </a>
-                <a asp-controller="OwnerRequest" asp-action="Index" class="nav-link-item @(ctx == "OwnerRequest" ? "active" : "")">
-                    <span class="nav-icon"><i class="fa-solid fa-store-check"></i></span>
-                    <span class="nav-label">Yêu cầu chủ quán</span>
-                </a>
+
+                @if (User.IsInRole("admin"))
+                {
+                    <a asp-controller="Users" asp-action="Index" class="nav-link-item @(ctx == "Users" ? "active" : "")">
+                        <span class="nav-icon"><i class="fa-solid fa-users"></i></span>
+                        <span class="nav-label">Quản lý người dùng</span>
+                    </a>
+                }
+
                 <a asp-controller="Account" asp-action="Logout" class="nav-link-item nav-danger">
                     <span class="nav-icon"><i class="fa-solid fa-right-from-bracket"></i></span>
                     <span class="nav-label">Đăng xuất</span>
                 </a>
+
             </nav>
         </aside>
 
@@ -79,7 +118,7 @@
                 <div class="topbar-right">
                     <div class="topbar-user">
                         <div class="user-avatar">A</div>
-                        <span class="user-name">Admin</span>
+                        <span class="user-name">@role</span>
                     </div>
                 </div>
             </header>
@@ -105,11 +144,13 @@
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        document.querySelectorAll('.alert-toast').forEach(el => {
-            setTimeout(() => el.style.opacity = '0', 3500);
-            setTimeout(() => el.remove(), 4000);
-        });
+            document.querySelectorAll('.alert-toast').forEach(el => {
+                setTimeout(() => el.style.opacity = '0', 3500);
+                setTimeout(() => el.remove(), 4000);
+            });
     </script>
     @await RenderSectionAsync("Scripts", required: false)
+    ```
+
 </body>
 </html>

@@ -1,260 +1,101 @@
 ﻿@{
     Layout = null;
 }
+
 <!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GPS Admin — Đăng nhập</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
     <style>
-        *, *::before, *::after {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-
-        body {
-            font-family: 'Be Vietnam Pro', sans-serif;
-            background: #0f172a;
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            position: relative;
-            overflow: hidden;
-        }
-
-            /* Ambient background */
-            body::before {
-                content: '';
-                position: absolute;
-                width: 600px;
-                height: 600px;
-                background: radial-gradient(circle, rgba(99,102,241,0.15) 0%, transparent 70%);
-                top: -100px;
-                left: -100px;
-                pointer-events: none;
+            body {
+                font-family: 'Be Vietnam Pro', sans-serif;
+                background: #0f172a;
+                min-height: 100vh;
+                display: flex;
+                align-items: center;
+                justify-content: center;
             }
 
-            body::after {
-                content: '';
-                position: absolute;
-                width: 400px;
-                height: 400px;
-                background: radial-gradient(circle, rgba(139,92,246,0.1) 0%, transparent 70%);
-                bottom: -50px;
-                right: -50px;
-                pointer-events: none;
+            .login-box {
+                width: 100%;
+                max-width: 420px;
             }
 
-        .login-box {
-            position: relative;
-            z-index: 10;
-            width: 100%;
-            max-width: 420px;
-            padding: 20px;
-        }
-
-        /* Brand */
-        .login-brand {
-            text-align: center;
-            margin-bottom: 36px;
-        }
-
-        .login-brand-icon {
-            width: 56px;
-            height: 56px;
-            background: #6366f1;
-            border-radius: 16px;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 24px;
-            color: white;
-            margin-bottom: 14px;
-            box-shadow: 0 8px 24px rgba(99,102,241,0.4);
-        }
-
-        .login-brand-name {
-            font-size: 22px;
-            font-weight: 800;
-            color: white;
-            letter-spacing: 0.3px;
-        }
-
-        .login-brand-sub {
-            font-size: 13px;
-            color: rgba(255,255,255,0.4);
-            margin-top: 4px;
-        }
-
-        /* Card */
-        .login-card {
-            background: rgba(255,255,255,0.04);
-            border: 1px solid rgba(255,255,255,0.08);
-            border-radius: 20px;
-            padding: 36px;
-            backdrop-filter: blur(20px);
-        }
-
-            .login-card h2 {
-                font-size: 17px;
-                font-weight: 700;
+            .login-card {
+                background: rgba(255,255,255,0.05);
+                padding: 30px;
+                border-radius: 16px;
                 color: white;
-                margin-bottom: 6px;
             }
 
-            .login-card p {
-                font-size: 13px;
-                color: rgba(255,255,255,0.4);
-                margin-bottom: 28px;
+            input {
+                width: 100%;
+                padding: 10px;
+                margin-top: 6px;
+                margin-bottom: 14px;
+                border-radius: 8px;
+                border: none;
             }
 
-        .form-group {
-            margin-bottom: 18px;
-        }
-
-        label {
-            display: block;
-            font-size: 11px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.8px;
-            color: rgba(255,255,255,0.5);
-            margin-bottom: 8px;
-        }
-
-        .input-wrap {
-            position: relative;
-        }
-
-            .input-wrap i {
-                position: absolute;
-                left: 14px;
-                top: 50%;
-                transform: translateY(-50%);
-                color: rgba(255,255,255,0.25);
-                font-size: 14px;
+            .btn-login {
+                width: 100%;
+                padding: 12px;
+                background: #6366f1;
+                color: white;
+                border: none;
+                border-radius: 8px;
+                font-weight: bold;
             }
 
-        input[type="text"],
-        input[type="password"] {
-            width: 100%;
-            padding: 12px 14px 12px 42px;
-            background: rgba(255,255,255,0.06);
-            border: 1.5px solid rgba(255,255,255,0.1);
-            border-radius: 10px;
-            color: white;
-            font-size: 14px;
-            font-family: 'Be Vietnam Pro', sans-serif;
-            outline: none;
-            transition: border-color 0.15s, background 0.15s;
-        }
-
-        input:focus {
-            border-color: #6366f1;
-            background: rgba(99,102,241,0.08);
-        }
-
-        input::placeholder {
-            color: rgba(255,255,255,0.2);
-        }
-
-        .error-msg {
-            background: rgba(239,68,68,0.1);
-            border: 1px solid rgba(239,68,68,0.25);
-            color: #fca5a5;
-            border-radius: 8px;
-            padding: 10px 14px;
-            font-size: 13px;
-            margin-bottom: 18px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .btn-login {
-            width: 100%;
-            padding: 13px;
-            background: #6366f1;
-            border: none;
-            border-radius: 10px;
-            color: white;
-            font-size: 14px;
-            font-weight: 700;
-            font-family: 'Be Vietnam Pro', sans-serif;
-            cursor: pointer;
-            margin-top: 8px;
-            transition: background 0.15s, box-shadow 0.15s, transform 0.1s;
-            box-shadow: 0 4px 16px rgba(99,102,241,0.35);
-        }
-
-            .btn-login:hover {
-                background: #4f46e5;
-                box-shadow: 0 6px 20px rgba(99,102,241,0.45);
-                transform: translateY(-1px);
+            .error-msg {
+                background: #7f1d1d;
+                padding: 10px;
+                margin-bottom: 10px;
+                border-radius: 8px;
             }
-
-            .btn-login:active {
-                transform: translateY(0);
-            }
-
-        .login-footer {
-            text-align: center;
-            margin-top: 24px;
-            font-size: 12px;
-            color: rgba(255,255,255,0.2);
-        }
     </style>
 </head>
-<body>
-    <div class="login-box">
-        <div class="login-brand">
-            <div class="login-brand-icon">
-                <i class="fa-solid fa-location-dot"></i>
-            </div>
-            <div class="login-brand-name">GPS Admin</div>
-            <div class="login-brand-sub">Tour & POI Management System</div>
-        </div>
 
+<body>
+
+    <div class="login-box">
         <div class="login-card">
+
             <h2>Đăng nhập hệ thống</h2>
-            <p>Vui lòng nhập tài khoản quản trị viên</p>
 
             @if (ViewBag.Error != null)
             {
                 <div class="error-msg">
-                    <i class="fa-solid fa-circle-exclamation"></i>
                     @ViewBag.Error
                 </div>
             }
 
-            <form asp-action="Login" method="post">
-                <div class="form-group">
-                    <label>Tên đăng nhập</label>
-                    <div class="input-wrap">
-                        <i class="fa-solid fa-user"></i>
-                        <input type="text" name="username" placeholder="admin" required autocomplete="username">
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label>Mật khẩu</label>
-                    <div class="input-wrap">
-                        <i class="fa-solid fa-lock"></i>
-                        <input type="password" name="password" placeholder="••••••" required autocomplete="current-password">
-                    </div>
-                </div>
+            <form asp-controller="Account" asp-action="Login" method="post">
+
+                <label>Tên đăng nhập</label>
+                <input type="text" name="username"
+                       value="@ViewBag.Username"
+                       placeholder="Nhập username"
+                       required />
+
+                <label>Mật khẩu</label>
+                <input type="password" name="password"
+                       placeholder="Nhập password"
+                       required />
+
                 <button type="submit" class="btn-login">
-                    Đăng nhập <i class="fa-solid fa-arrow-right" style="margin-left:6px"></i>
+                    Đăng nhập
                 </button>
             </form>
-        </div>
 
-        <div class="login-footer">© 2026 GPS Admin · All rights reserved</div>
+        </div>
     </div>
+
 </body>
 </html>
