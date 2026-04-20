@@ -1,44 +1,80 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using WebCMS.Models;
 using WebCMS.Services;
+using System.Security.Claims;
 
 namespace WebCMS.Controllers
 {
+    [Authorize(Roles = "admin,owner")]
     public class POIController : Controller
     {
         private readonly IPOIService _poiService;
         private readonly TranslationService _translationService;
+        private readonly IVisitHistoryService _visitHistoryService;
 
-        public POIController(IPOIService poiService, TranslationService translationService)
+        public POIController(
+            IPOIService poiService,
+            TranslationService translationService,
+            IVisitHistoryService visitHistoryService)
         {
             _poiService = poiService;
             _translationService = translationService;
+            _visitHistoryService = visitHistoryService;
         }
 
+        // ================= INDEX + DASHBOARD =================
         public async Task<IActionResult> Index()
         {
             var pois = await _poiService.GetAllAsync();
+            var visitHistory = await _visitHistoryService.GetAllAsync();
+
+            // ✅ FIX: dùng Claims thay vì Session
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            if (User.IsInRole("owner"))
+            {
+                pois = pois.Where(p => p.OwnerID == userId).ToList();
+
+                visitHistory = visitHistory
+                    .Where(v => pois.Any(p => p.Id == v.POIID))
+                    .ToList();
+            }
+
+            ViewBag.ActiveUsers = visitHistory
+                .Where(v => !string.IsNullOrEmpty(v.UserID))
+                .Select(v => v.UserID)
+                .Distinct()
+                .Count();
+
+            var topPoiId = visitHistory
+                .Where(v => v.ScanMethod == "QR_Scan")
+                .GroupBy(v => v.POIID)
+                .OrderByDescending(g => g.Count())
+                .Select(g => g.Key)
+                .FirstOrDefault();
+
+            ViewBag.TopPOI = pois
+                .FirstOrDefault(p => p.Id == topPoiId)
+                ?.Name ?? "N/A";
+
             var poiDtos = pois.Select(p => new POIDTO
             {
-                POIID = p.POIID,
-
-                // Gán tên địa điểm (nếu Model của bạn đổi thành RestaurantName thì dùng p.RestaurantName)
+                POIID = p.Id,                                   // ✅ Id → POIID
                 Name = p.Name ?? "Chưa đặt tên",
-
                 Description = p.Description ?? "",
-
                 Latitude = (decimal)p.Latitude,
                 Longitude = (decimal)p.Longitude,
                 CategoryName = p.Category ?? "Chưa phân loại",
-
-                Img = !string.IsNullOrEmpty(p.Img)
-                      ? $"https://gzm4vrwg-7054.asse.devtunnels.ms/uploads/{p.Img}"
-                      : null
+                Img = !string.IsNullOrEmpty(p.Image)            // ✅ Image → Img
+                    ? $"https://gzm4vrwg-7054.asse.devtunnels.ms/uploads/{p.Image}"
+                    : null
             }).ToList();
 
             return View(poiDtos);
         }
 
+        // ================= CREATE =================
         [HttpGet]
         public IActionResult Create() => View();
 
@@ -47,6 +83,9 @@ namespace WebCMS.Controllers
         {
             try
             {
+                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                poi.OwnerID = userId;                           // ✅ string? = string?
+
                 await _poiService.CreateAsync(poi, imageFile);
                 return RedirectToAction("Index");
             }
@@ -57,18 +96,33 @@ namespace WebCMS.Controllers
             }
         }
 
+        // ================= EDIT =================
         [HttpGet]
         public async Task<IActionResult> Edit(string id)
         {
             var poi = await _poiService.GetByIdAsync(id);
             if (poi == null) return NotFound();
+
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            if (User.IsInRole("owner") && poi.OwnerID != userId)
+                return Forbid();
+
             return View(poi);
         }
 
         [HttpPost]
         public async Task<IActionResult> Edit(string id, POI poi, IFormFile? imageFile)
         {
-            poi.POIID = id;
+            var existingPoi = await _poiService.GetByIdAsync(id);
+            if (existingPoi == null) return NotFound();
+
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            if (User.IsInRole("owner") && existingPoi.OwnerID != userId)
+                return Forbid();
+
+            poi.Id = id;                                        // ✅ Id thay vì POIID
 
             try
             {
@@ -82,22 +136,48 @@ namespace WebCMS.Controllers
             }
         }
 
+        // ================= DELETE =================
         [HttpPost]
         public async Task<IActionResult> Delete(string id)
         {
+            var poi = await _poiService.GetByIdAsync(id);
+            if (poi == null) return NotFound();
+
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            if (User.IsInRole("owner") && poi.OwnerID != userId)
+                return Forbid();
+
             await _poiService.DeleteAsync(id);
             return RedirectToAction("Index");
         }
 
+        // ================= TRANSLATION =================
         public async Task<IActionResult> Translation(string id)
         {
+            var poi = await _poiService.GetByIdAsync(id);
+            if (poi == null) return NotFound();
+
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            if (User.IsInRole("owner") && poi.OwnerID != userId)
+                return Forbid();
+
             var list = await _translationService.GetByPOIAsync(id);
             ViewBag.POIID = id;
             return View(list);
         }
 
-        public IActionResult AddTranslation(string poiId)
+        public async Task<IActionResult> AddTranslation(string poiId)
         {
+            var poi = await _poiService.GetByIdAsync(poiId);
+            if (poi == null) return NotFound();
+
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            if (User.IsInRole("owner") && poi.OwnerID != userId)
+                return Forbid();
+
             ViewBag.POIID = poiId;
             return View();
         }
@@ -105,12 +185,28 @@ namespace WebCMS.Controllers
         [HttpPost]
         public async Task<IActionResult> AddTranslation(POITranslation t)
         {
+            var poi = await _poiService.GetByIdAsync(t.POIID);
+            if (poi == null) return NotFound();
+
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            if (User.IsInRole("owner") && poi.OwnerID != userId)
+                return Forbid();
+
             await _translationService.CreateAsync(t);
             return RedirectToAction("Translation", new { id = t.POIID });
         }
 
         public async Task<IActionResult> DeleteTranslation(string poiId, string lang)
         {
+            var poi = await _poiService.GetByIdAsync(poiId);
+            if (poi == null) return NotFound();
+
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            if (User.IsInRole("owner") && poi.OwnerID != userId)
+                return Forbid();
+
             await _translationService.DeleteAsync(poiId, lang);
             return RedirectToAction("Translation", new { id = poiId });
         }

@@ -18,10 +18,11 @@
             </p>
         </div>
 
-        <form asp-action="Edit" asp-route-id="@Model.POIID" method="post" enctype="multipart/form-data">
+        <!-- ✅ FIX: Model.Id thay vì Model.POIID -->
+        <form asp-action="Edit" asp-route-id="@Model.Id" method="post" enctype="multipart/form-data">
 
-            <!-- Giữ tên file ảnh cũ nếu không upload mới -->
-            <input type="hidden" asp-for="Img" />
+            <!-- ✅ FIX: asp-for="Image" thay vì asp-for="Img" -->
+            <input type="hidden" asp-for="Image" />
 
             <div class="form-group">
                 <label class="form-label-admin">Tên địa điểm *</label>
@@ -64,16 +65,16 @@
                 <input asp-for="Description" class="form-control-admin" placeholder="VD: 1 Nguyễn Thị Minh Khai, Hội An" />
             </div>
 
-            <!-- Ảnh hiện tại -->
+            <!-- ✅ FIX: Model.Image thay vì Model.Img (3 chỗ) -->
             <div class="form-group">
                 <label class="form-label-admin">Ảnh hiện tại</label>
-                @if (!string.IsNullOrEmpty(Model.Img))
+                @if (!string.IsNullOrEmpty(Model.Image))
                 {
                     <div style="margin-bottom:10px">
-                        <img src="/uploads/@Model.Img" alt="@Model.Name"
+                        <img src="/uploads/@Model.Image" alt="@Model.Name"
                              style="height:120px;border-radius:8px;border:1px solid var(--border);object-fit:cover" />
                         <div style="font-size:12px;color:var(--text-muted);margin-top:4px">
-                            <i class="fa-solid fa-file-image"></i> @Model.Img
+                            <i class="fa-solid fa-file-image"></i> @Model.Image
                         </div>
                     </div>
                 }

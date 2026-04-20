@@ -34,25 +34,46 @@
 
 @section Scripts {
     <script>
+        // 1. Nhận các biến cấu hình từ Controller gửi xuống qua ViewBag
         const API_URL = '@ViewBag.ApiUrl';
+        const currentUserId = '@ViewBag.CurrentUserId';
+        const userRole = '@ViewBag.UserRole';
 
-        async function loadQRCodes() {
+               async function loadQRCodes() {
             const tbody = document.getElementById('qrTableBody');
             try {
-                const response = await fetch(`${API_URL}QRCode`);
+                // --- BƯỚC KIỂM TRA (Nhấn F12 chọn tab Console để xem) ---
+                console.log("1. UserID hiện tại:", currentUserId);
+                console.log("2. Role hiện tại:", userRole);
+
+                let fetchUrl = `${API_URL}QRCode`;
+        
+                // Sửa điều kiện: Chuyển Role về chữ thường để so sánh cho chính xác
+                // Dùng .trim() để loại bỏ khoảng trắng dư thừa nếu có
+                if (userRole && userRole.trim().toLowerCase() === "owner" && currentUserId) {
+                    fetchUrl += `?ownerId=${currentUserId}`;
+                    console.log("3. Trạng thái: Đã nhận diện Owner, đang lọc theo ID...");
+                } else {
+                    console.log("3. Trạng thái: Không lọc (Do Role không phải owner hoặc thiếu ID)");
+                }
+
+                console.log("4. URL gọi API cuối cùng:", fetchUrl);
+                // -------------------------------------------------------
+
+                const response = await fetch(fetchUrl);
                 if (!response.ok) throw new Error('Lỗi kết nối API: ' + response.status);
 
                 const data = await response.json();
                 tbody.innerHTML = '';
 
                 if (data.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 20px;">Database trống</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 20px;">Không tìm thấy mã QR nào cho tài khoản này.</td></tr>';
                     return;
                 }
 
                 data.forEach(item => {
-                    // 1. CHUẨN HÓA BIẾN: Bắt mọi trường hợp hoa/thường từ API
-                    const qrId = item.qrid || item.qrId || item.QRID || 'N/A';
+                    // Chuẩn hóa tên trường (Mapping dữ liệu từ API trả về)
+                    const qrId = item.qrId || item.qrid || item.QRID || 'N/A';
                     const poiId = item.poiid || item.poiId || item.POIID || 'N/A';
                     const qrValue = item.qrValue || item.QRValue || 'N/A';
                     const createdAt = item.createdAt || item.CreatedAt;
@@ -80,12 +101,11 @@
                 });
             } catch (err) {
                 console.error("Lỗi fetch:", err);
-                tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:red; padding:20px;">Lỗi: ${err.message}</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:red; padding:20px;">Lỗi hệ thống: ${err.message}</td></tr>`;
             }
         }
-
+        // HÀM XÓA (Giữ nguyên logic bảo mật của bạn)
         async function deleteQR(id) {
-
             if (id === 'N/A' || id === 'undefined') {
                 alert("Không thể xóa! Dòng dữ liệu này đang bị mất QRID trong Database. Vui lòng nhờ Admin xóa trực tiếp bằng SQL.");
                 return;
