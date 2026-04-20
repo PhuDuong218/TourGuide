@@ -38,7 +38,7 @@ namespace WebCMS.Controllers
                 pois = pois.Where(p => p.OwnerID == userId).ToList();
 
                 visitHistory = visitHistory
-                    .Where(v => pois.Any(p => p.Id == v.POIID))
+                    .Where(v => pois.Any(p => p.POIID == v.POIID))
                     .ToList();
             }
 
@@ -56,20 +56,22 @@ namespace WebCMS.Controllers
                 .FirstOrDefault();
 
             ViewBag.TopPOI = pois
-                .FirstOrDefault(p => p.Id == topPoiId)
-                ?.Name ?? "N/A";
+                .FirstOrDefault(p => p.POIID == topPoiId)
+                ?.RestaurantName ?? "N/A";
 
             var poiDtos = pois.Select(p => new POIDTO
             {
-                POIID = p.Id,                                   // ✅ Id → POIID
-                Name = p.Name ?? "Chưa đặt tên",
-                Description = p.Description ?? "",
+                POIID = p.POIID,                                   // ✅ Id → POIID
+                RestaurantName = p.RestaurantName ?? "Chưa đặt tên",
                 Latitude = (decimal)p.Latitude,
                 Longitude = (decimal)p.Longitude,
-                CategoryName = p.Category ?? "Chưa phân loại",
-                Img = !string.IsNullOrEmpty(p.Image)            // ✅ Image → Img
-                    ? $"https://gzm4vrwg-7054.asse.devtunnels.ms/uploads/{p.Image}"
-                    : null
+                Category = p.Category ?? "Chưa phân loại",
+                Img = !string.IsNullOrEmpty(p.Img)            // ✅ Image → Img
+                    ? $"https://gzm4vrwg-7054.asse.devtunnels.ms/uploads/{p.Img}"
+                    : null,
+                ViewCount = p.ViewCount,
+                ListenCount = p.ListenCount,
+                Priority = p.Priority
             }).ToList();
 
             return View(poiDtos);
@@ -123,7 +125,7 @@ namespace WebCMS.Controllers
             if (User.IsInRole("owner") && existingPoi.OwnerID != userId)
                 return Forbid();
 
-            poi.Id = id;                                        // ✅ Id thay vì POIID
+            poi.POIID = id;                                        // ✅ Id thay vì POIID
 
             try
             {

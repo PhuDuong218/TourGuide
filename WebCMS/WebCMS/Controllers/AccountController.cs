@@ -1,10 +1,10 @@
-﻿namespace WebCMS.Controllers
-{
-    using System.Security.Claims;
-    using Microsoft.AspNetCore.Authentication;
-    using Microsoft.AspNetCore.Authentication.Cookies;
-    using Microsoft.AspNetCore.Mvc;
+﻿using System.Security.Claims;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Mvc;
 
+namespace WebCMS.Controllers
+{
     public class AccountController : Controller
     {
         // ── 1. Trang Login ─────────────────────────────
@@ -17,7 +17,7 @@
         [HttpPost]
         public async Task<IActionResult> Login(string username, string password)
         {
-            // 🔴 Check rỗng
+            // 🔴 Check rỗng (FIX đúng)
             if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(password))
             {
                 ViewBag.Error = "Vui lòng nhập đầy đủ thông tin!";
@@ -28,7 +28,7 @@
             string role = "";
             string userId = "";
 
-            // 🔥 DEMO LOGIN (map đúng DB)
+            // 🔥 DEMO LOGIN
             if (username == "admin" && password == "123456")
             {
                 role = "admin";
@@ -47,17 +47,17 @@
             else
             {
                 ViewBag.Error = "Tài khoản hoặc mật khẩu không đúng!";
-                ViewBag.Username = username; // ✅ giữ lại input
+                ViewBag.Username = username;
                 return View();
             }
 
-            // 🔴 XÓA COOKIE CŨ (tránh bug session)
+            // 🔴 XÓA COOKIE CŨ
             await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
 
-            // 🔴 CLAIM CHUẨN
+            // 🔴 CLAIM
             var claims = new List<Claim>
             {
-                new Claim(ClaimTypes.NameIdentifier, userId), // 🔥 QUAN TRỌNG
+                new Claim(ClaimTypes.NameIdentifier, userId), // QUAN TRỌNG
                 new Claim(ClaimTypes.Name, username),
                 new Claim(ClaimTypes.Role, role)
             };
@@ -71,8 +71,8 @@
                 principal
             );
 
-            // 🔥 Redirect chung (không cần if nữa)
-            return RedirectToAction("Index", "POI");
+            // 🔥 Redirect sau login
+            return RedirectToAction("Index", "Home");
         }
 
         // ── 3. Logout ─────────────────────────────

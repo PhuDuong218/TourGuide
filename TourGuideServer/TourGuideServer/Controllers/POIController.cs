@@ -117,6 +117,9 @@ namespace TourGuideServer.Controllers
             if (poi == null) return NotFound();
 
             // 1. Chỉ cập nhật các trường cơ bản (Xóa phần Name và Description gây lỗi)
+            poi.RestaurantName = updatedPoi.RestaurantName; // Thêm dòng này
+            poi.Address = updatedPoi.Address;               // Thêm dòng này
+            poi.Priority = updatedPoi.Priority;
             poi.Latitude = updatedPoi.Latitude;
             poi.Longitude = updatedPoi.Longitude;
             poi.Category = updatedPoi.Category;

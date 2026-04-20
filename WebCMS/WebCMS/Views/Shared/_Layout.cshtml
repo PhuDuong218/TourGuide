@@ -21,8 +21,6 @@
 <body>
     <div class="shell">
 
-        ```
-        <!-- ══ SIDEBAR ══ -->
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-brand">
                 <div class="brand-icon"><i class="fa-solid fa-location-dot"></i></div>
@@ -32,7 +30,14 @@
                 </div>
             </div>
 
-            <!-- 🔴 NỘI DUNG -->
+            <div class="sidebar-section-label">Tổng quan</div>
+            <nav class="sidebar-nav">
+                <a asp-controller="Home" asp-action="Index" class="nav-link-item @(ctx == "Home" ? "active" : "")">
+                    <span class="nav-icon"><i class="fa-solid fa-chart-pie"></i></span>
+                    <span class="nav-label">Bảng điều khiển</span>
+                </a>
+            </nav>
+
             <div class="sidebar-section-label">Nội dung</div>
             <nav class="sidebar-nav">
 
@@ -66,7 +71,6 @@
 
             </nav>
 
-            <!-- 🔴 PHÂN TÍCH -->
             <div class="sidebar-section-label">Phân tích</div>
             <nav class="sidebar-nav">
 
@@ -88,7 +92,6 @@
 
             </nav>
 
-            <!-- 🔴 HỆ THỐNG -->
             <div class="sidebar-section-label">Hệ thống</div>
             <nav class="sidebar-nav">
 
@@ -108,7 +111,6 @@
             </nav>
         </aside>
 
-        <!-- ══ MAIN ══ -->
         <div class="main-wrap">
             <header class="topbar">
                 <button class="topbar-toggle" onclick="document.getElementById('sidebar').classList.toggle('collapsed')">
@@ -144,13 +146,12 @@
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-            document.querySelectorAll('.alert-toast').forEach(el => {
-                setTimeout(() => el.style.opacity = '0', 3500);
-                setTimeout(() => el.remove(), 4000);
-            });
+        document.querySelectorAll('.alert-toast').forEach(el => {
+            setTimeout(() => el.style.opacity = '0', 3500);
+            setTimeout(() => el.remove(), 4000);
+        });
     </script>
     @await RenderSectionAsync("Scripts", required: false)
-    ```
 
 </body>
 </html>

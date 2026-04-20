@@ -38,7 +38,10 @@ namespace TourGuideServer.Services
                     ?? any.Select(t => t.ShortDescription).FirstOrDefault()
                     ?? "Không có mô tả",
 
-                NarrationText = byLang.Select(t => t.NarrationText).FirstOrDefault() ?? ""
+                NarrationText = byLang.Select(t => t.NarrationText).FirstOrDefault() ?? "",
+                ViewCount = p.ViewCount,
+                ListenCount = p.ListenCount,
+                Priority = p.Priority
             };
         }
 

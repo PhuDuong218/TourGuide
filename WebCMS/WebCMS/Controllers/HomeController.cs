@@ -1,22 +1,58 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using WebCMS.Services;
+using System.Text.Json;
+using WebCMS.Models;
 
-public class HomeController : Controller
+namespace WebCMS.Controllers
 {
-    private readonly StatsService _statsService;
-    public HomeController(StatsService statsService) => _statsService = statsService;
-
-    public async Task<IActionResult> Index()
+    public class HomeController : Controller
     {
-        var model = await _statsService.GetFullDashboardAsync();
-        return View(model);
-    }
+        private readonly string _apiUrl = "https://gzm4vrwg-7054.asse.devtunnels.ms/api/Stats";
 
-    // API cục bộ phục vụ việc cập nhật số người online mà không load lại trang
-    [HttpGet]
-    public async Task<JsonResult> GetRealTimeActiveUsers()
-    {
-        var model = await _statsService.GetSummaryAsync();
-        return Json(new { count = model.ActiveToday });
+        public async Task<IActionResult> Index()
+        {
+            var model = new DashboardViewModel();
+            try
+            {
+                using var client = new HttpClient();
+
+                // Gửi Request lấy dữ liệu từ Server API
+                var response = await client.GetAsync($"{_apiUrl}/dashboard");
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var jsonString = await response.Content.ReadAsStringAsync();
+
+                    // Chuyển JSON thành Object Model
+                    var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                    model = JsonSerializer.Deserialize<DashboardViewModel>(jsonString, options) ?? new DashboardViewModel();
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Lỗi khi lấy dữ liệu Dashboard: " + ex.Message);
+            }
+
+            return View(model);
+        }
+
+        // Đẩy thẳng kết quả API về cho Javascript vẽ số Real-time
+        [HttpGet]
+        public async Task<IActionResult> GetRealTimeActiveUsers()
+        {
+            try
+            {
+                using var client = new HttpClient();
+                var response = await client.GetAsync($"{_apiUrl}/active-users");
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var jsonString = await response.Content.ReadAsStringAsync();
+                    return Content(jsonString, "application/json");
+                }
+            }
+            catch { }
+
+            return Json(new { count = 0 });
+        }
     }
 }

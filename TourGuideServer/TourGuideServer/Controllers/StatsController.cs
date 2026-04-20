@@ -1,86 +1,88 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using TourGuideServer.Data;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Caching.Memory;
+using TourGuideServer.Data;
 
-[Route("api/[controller]")]
-[ApiController]
-public class StatsController : ControllerBase
+namespace TourGuideServer.Controllers
 {
-    private readonly AppDbContext _context;
-    private readonly IMemoryCache _cache;
-    private const string ActiveUsersKey = "ActiveUsers_Heartbeat";
-
-    public StatsController(AppDbContext context, IMemoryCache cache)
+    [ApiController]
+    [Route("api/[controller]")]
+    public class StatsController : ControllerBase
     {
-        _context = context;
-        _cache = cache;
-    }
+        private readonly AppDbContext _context;
 
-    // API Heartbeat: App gọi mỗi 3 giây để báo danh
-    [HttpPost("heartbeat/{userId}")]
-    public IActionResult Heartbeat(string userId)
-    {
-        var activeUsers = _cache.Get<Dictionary<string, DateTime>>(ActiveUsersKey) ?? new();
-        activeUsers[userId] = DateTime.Now;
-        // Lưu cache trong 1 phút để dự phòng
-        _cache.Set(ActiveUsersKey, activeUsers, TimeSpan.FromMinutes(1));
-        return Ok();
-    }
-
-    [HttpGet("summary")]
-    public async Task<IActionResult> GetSummary()
-    {
-        // Tính toán số người thực sự online trong 10 giây qua (Heartbeat)
-        var activeUsers = _cache.Get<Dictionary<string, DateTime>>(ActiveUsersKey) ?? new();
-        int realTimeActive = activeUsers.Count(u => (DateTime.Now - u.Value).TotalSeconds <= 10);
-
-        var stats = new
+        public StatsController(AppDbContext context)
         {
-            TotalUsers = await _context.Users.CountAsync(u => u.Role == "user"),
-            TotalQR = await _context.POIs.CountAsync(),
-            TotalQRScans = await _context.VisitHistories.CountAsync(), // Tổng lượt quét QR
-            TotalAppUsage = await _context.POIs.SumAsync(p => p.ListenCount), // Tổng lượt nghe
-            ActiveToday = realTimeActive
-        };
-        return Ok(stats);
-    }
-
-    [HttpGet("chart-data")]
-    public async Task<IActionResult> GetChartData()
-    {
-        var last7Days = Enumerable.Range(0, 7)
-            .Select(i => DateTime.Today.AddDays(-i))
-            .Reverse()
-            .ToList();
-
-        var trendLabels = last7Days.Select(d => d.ToString("dd/MM")).ToList();
-        var installData = new List<int>();
-        var activeData = new List<int>();
-        var scanData = new List<int>();
-
-        foreach (var date in last7Days)
-        {
-            // Xử lý kiểu DateTime? bằng .HasValue
-            installData.Add(await _context.Users.CountAsync(u => u.CreatedAt.HasValue && u.CreatedAt.Value.Date == date.Date));
-            activeData.Add(await _context.VisitHistories.Where(v => v.VisitTime.Date == date.Date).Select(v => v.UserID).Distinct().CountAsync());
-            scanData.Add(await _context.VisitHistories.CountAsync(v => v.VisitTime.Date == date.Date));
+            _context = context;
         }
 
-        var top5Pois = await _context.POIs
-            .OrderByDescending(p => p.ListenCount)
-            .Take(5)
-            .Select(p => new { p.RestaurantName, p.ListenCount }) // Dùng RestaurantName khớp Model
-            .ToListAsync();
-
-        return Ok(new
+        [HttpGet("dashboard")]
+        public async Task<IActionResult> GetDashboardStats()
         {
-            TrendLabels = trendLabels,
-            InstallData = installData,
-            ActiveData = activeData,
-            ScanData = scanData,
-            Top5Labels = top5Pois.Select(p => p.RestaurantName).ToList(),
-            Top5Data = top5Pois.Select(p => p.ListenCount).ToList()
-        });
+            var today = DateTime.Today;
+
+            // 1. Thống kê tổng quan
+            var totalLanguages = await _context.Languages.CountAsync();
+            var totalQR = await _context.QRCodes.CountAsync();
+            var totalQRScans = await _context.VisitHistories.CountAsync(v => v.ScanMethod == "QR_Scan");
+            var totalAppUsage = await _context.VisitHistories.CountAsync();
+            var activeToday = await _context.VisitHistories
+                .Where(v => v.VisitTime >= today)
+                .Select(v => v.UserID)
+                .Distinct()
+                .CountAsync();
+
+            // 2. Thống kê biểu đồ xu hướng 7 ngày
+            var trendLabels = new List<string>();
+            var installTrend = new List<int>();
+            var activeTrend = new List<int>();
+            var scanTrend = new List<int>();
+
+            var startDate = today.AddDays(-6);
+            for (int i = 0; i <= 6; i++)
+            {
+                var currentDate = startDate.AddDays(i);
+                var nextDate = currentDate.AddDays(1);
+
+                trendLabels.Add(currentDate.ToString("dd/MM"));
+
+                installTrend.Add(await _context.Users.CountAsync(u => u.Role == "user" && u.CreatedAt >= currentDate && u.CreatedAt < nextDate));
+                activeTrend.Add(await _context.VisitHistories.CountAsync(v => v.VisitTime >= currentDate && v.VisitTime < nextDate));
+                scanTrend.Add(await _context.VisitHistories.CountAsync(v => v.ScanMethod == "QR_Scan" && v.VisitTime >= currentDate && v.VisitTime < nextDate));
+            }
+
+            // 3. Thống kê Top 5 POI
+            var topPois = await _context.POIs.OrderByDescending(p => p.ListenCount).Take(5).ToListAsync();
+            var chartLabels = topPois.Select(p => p.RestaurantName ?? "Chưa đặt tên").ToList();
+            var chartValues = topPois.Select(p => p.ListenCount).ToList();
+
+            // Trả về JSON 
+            return Ok(new
+            {
+                totalLanguages,
+                totalQR,
+                totalQRScans,
+                totalAppUsage,
+                activeToday,
+                trendLabels,
+                installTrend,
+                activeTrend,
+                scanTrend,
+                chartLabels,
+                chartValues
+            });
+        }
+
+        [HttpGet("active-users")]
+        public async Task<IActionResult> GetRealTimeActive()
+        {
+            var fiveMinsAgo = DateTime.Now.AddMinutes(-5);
+            var activeCount = await _context.VisitHistories
+                .Where(v => v.VisitTime >= fiveMinsAgo)
+                .Select(v => v.UserID)
+                .Distinct()
+                .CountAsync();
+
+            return Ok(new { count = activeCount });
+        }
     }
 }

@@ -61,15 +61,24 @@ namespace WebCMS.Services
 
             content.Add(new StringContent(id), "POIID");
 
+            content.Add(new StringContent(poi.Priority.ToString()), "Priority");
+
+            // Đảm bảo có gửi Tên và Địa chỉ
+            if (!string.IsNullOrEmpty(poi.RestaurantName))
+                content.Add(new StringContent(poi.RestaurantName), "RestaurantName");
+
+            if (!string.IsNullOrEmpty(poi.Address))
+                content.Add(new StringContent(poi.Address), "Address");
+
             if (!string.IsNullOrEmpty(poi.Category))
                 content.Add(new StringContent(poi.Category), "Category");
 
             content.Add(new StringContent(poi.Latitude.ToString(System.Globalization.CultureInfo.InvariantCulture)), "Latitude");
             content.Add(new StringContent(poi.Longitude.ToString(System.Globalization.CultureInfo.InvariantCulture)), "Longitude");
 
-            // ✅ FIX: dùng poi.Image thay vì poi.Img
-            if (!string.IsNullOrEmpty(poi.Image))
-                content.Add(new StringContent(poi.Image), "Img");
+            // ✅ FIX: dùng poi.Img thay vì poi.Image
+            if (!string.IsNullOrEmpty(poi.Img))
+                content.Add(new StringContent(poi.Img), "Img");
 
             if (imageFile != null && imageFile.Length > 0)
             {
@@ -91,16 +100,16 @@ namespace WebCMS.Services
             using var content = new MultipartFormDataContent();
 
             // ✅ FIX: dùng poi.Id thay vì poi.POIID
-            if (string.IsNullOrEmpty(poi.Id))
+            if (string.IsNullOrEmpty(poi.POIID))
             {
                 Random rnd = new Random();
-                poi.Id = "P" + rnd.Next(1000, 9999);
+                poi.POIID = "P" + rnd.Next(1000, 9999);
             }
 
-            content.Add(new StringContent(poi.Id), "POIID");
+            content.Add(new StringContent(poi.POIID), "POIID");
 
-            if (!string.IsNullOrEmpty(poi.Name))
-                content.Add(new StringContent(poi.Name), "RestaurantName");
+            if (!string.IsNullOrEmpty(poi.RestaurantName))
+                content.Add(new StringContent(poi.RestaurantName), "RestaurantName");
 
             if (!string.IsNullOrEmpty(poi.Category))
                 content.Add(new StringContent(poi.Category), "Category");

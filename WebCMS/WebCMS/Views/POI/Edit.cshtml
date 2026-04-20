@@ -17,9 +17,10 @@
             </p>
         </div>
 
-        <!-- ✅ FIX: Model.Id thay vì Model.POIID -->
-        <form asp-action="Edit" asp-route-id="@Model.Id" method="post" enctype="multipart/form-data">
+        <!-- ✅ FIX: dùng POIID -->
+        <form asp-action="Edit" asp-route-id="@Model.POIID" method="post" enctype="multipart/form-data">
 
+            <!-- giữ ảnh cũ -->
             <input type="hidden" asp-for="Img" />
 
             <div class="form-group">
@@ -42,6 +43,7 @@
                         <option value="Khác">Khác</option>
                     </select>
                 </div>
+
                 <div class="form-group">
                     <label class="form-label-admin">Loại</label>
                     <select asp-for="Type" class="form-control-admin">
@@ -58,13 +60,12 @@
             <div class="form-grid-2">
                 <div class="form-group">
                     <label class="form-label-admin">Vĩ độ (Latitude) *</label>
-                    <input asp-for="Latitude" type="number" step="0.000001"
-                           class="form-control-admin" required />
+                    <input asp-for="Latitude" type="number" step="0.000001" class="form-control-admin" required />
                 </div>
+
                 <div class="form-group">
                     <label class="form-label-admin">Kinh độ (Longitude) *</label>
-                    <input asp-for="Longitude" type="number" step="0.000001"
-                           class="form-control-admin" required />
+                    <input asp-for="Longitude" type="number" step="0.000001" class="form-control-admin" required />
                 </div>
             </div>
 
@@ -73,16 +74,19 @@
                 <input asp-for="Address" class="form-control-admin" placeholder="VD: 1 Nguyễn Thị Minh Khai, Hội An" />
             </div>
 
+            <!-- ẢNH -->
             <div class="form-group">
                 <label class="form-label-admin">Ảnh hiện tại</label>
-                @if (!string.IsNullOrEmpty(Model.Image))
+
+                @if (!string.IsNullOrEmpty(Model.Img))
                 {
                     <div style="margin-bottom:10px">
-                        <img src="https://gzm4vrwg-7054.asse.devtunnels.ms/uploads/@Model.Img" alt="@Model.RestaurantName"
+                        <img src="https://gzm4vrwg-7054.asse.devtunnels.ms/uploads/@Model.Img"
+                             alt="@Model.RestaurantName"
                              style="height:120px;border-radius:8px;border:1px solid var(--border);object-fit:cover" />
 
                         <div style="font-size:12px;color:var(--text-muted);margin-top:4px">
-                            <i class="fa-solid fa-file-image"></i> @Model.Image
+                            <i class="fa-solid fa-file-image"></i> @Model.Img
                         </div>
                     </div>
                 }
@@ -96,6 +100,7 @@
                 <label class="form-label-admin">Thay ảnh mới (không bắt buộc)</label>
                 <input type="file" name="imageFile" class="form-control-admin"
                        id="imageInput" accept="image/*" />
+
                 <div class="form-hint">Chọn file mới để thay ảnh. Bỏ trống để giữ ảnh cũ.</div>
 
                 <div id="imagePreview" style="margin-top:10px;display:none">
@@ -109,10 +114,10 @@
 
             <div class="form-group">
                 <label class="form-label-admin">Bán kính geofence (m)</label>
-                <input asp-for="Radius" type="number" class="form-control-admin" value="10"
-                       min="10" max="500" />
-                <div class="form-hint">Phạm vi kích hoạt thuyết minh khi khách đến gần. Mặc định 50m.</div>
+                <input asp-for="Radius" type="number" class="form-control-admin" min="10" max="500" />
+                <div class="form-hint">Phạm vi kích hoạt thuyết minh khi khách đến gần.</div>
             </div>
+
             <div class="form-group">
                 <label class="form-label-admin">Mức độ ưu tiên (Sao)</label>
                 <select asp-for="Priority" class="form-control-admin">
@@ -122,7 +127,6 @@
                     <option value="4">4 Sao</option>
                     <option value="5">5 Sao</option>
                 </select>
-                <div class="form-hint">Thay đổi mức độ ưu tiên hiện tại cho địa điểm này.</div>
             </div>
 
             <div class="form-actions">
@@ -141,6 +145,7 @@
             const file = e.target.files[0];
             const preview = document.getElementById('imagePreview');
             const img = document.getElementById('previewImg');
+
             if (file) {
                 const reader = new FileReader();
                 reader.onload = function (e) {

@@ -1,22 +1,59 @@
 using Microsoft.AspNetCore.Authentication.Cookies;
-using WebCMS.Models;
 using WebCMS.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// ======================
 // 1. LẤY URL API
+// ======================
 var apiUrl = builder.Configuration["ApiSettings:BaseUrl"];
 if (string.IsNullOrEmpty(apiUrl))
 {
-    // Dự phòng nếu appsettings.json trống
     apiUrl = "https://gzm4vrwg-7054.asse.devtunnels.ms/api/";
 }
 
+// ======================
 // 2. ADD SERVICES
+// ======================
 builder.Services.AddControllersWithViews();
-builder.Services.AddScoped<TranslationService>();
 
-// Cấu hình Session (QUAN TRỌNG)
+// ======================
+// 🔥 HTTP CLIENT SERVICES
+// ======================
+
+// POI
+builder.Services.AddHttpClient<IPOIService, POIService>(client =>
+{
+    client.BaseAddress = new Uri(apiUrl);
+});
+
+// VisitHistory (interface)
+builder.Services.AddHttpClient<IVisitHistoryService, VisitHistoryService>(client =>
+{
+    client.BaseAddress = new Uri(apiUrl.Replace("/api/", "/"));
+});
+
+// VisitHistory (direct - optional)
+builder.Services.AddHttpClient<VisitHistoryService>(client =>
+{
+    client.BaseAddress = new Uri(apiUrl);
+});
+
+// Translation
+builder.Services.AddHttpClient<TranslationService>(client =>
+{
+    client.BaseAddress = new Uri(apiUrl);
+});
+
+// OwnerRequest
+builder.Services.AddHttpClient<OwnerRequestService>(client =>
+{
+    client.BaseAddress = new Uri(apiUrl);
+});
+
+// ======================
+// ✅ SESSION
+// ======================
 builder.Services.AddDistributedMemoryCache();
 builder.Services.AddSession(options =>
 {
@@ -25,29 +62,28 @@ builder.Services.AddSession(options =>
     options.Cookie.IsEssential = true;
 });
 
-builder.Services.AddHttpContextAccessor();
-
-// Cấu hình HttpClient dùng chung apiUrl
-builder.Services.AddHttpClient<IVisitHistoryService, VisitHistoryService>(client => {
-    client.BaseAddress = new Uri(apiUrl.Replace("/api/", "/")); // Trỏ về root server
-});
-
-builder.Services.AddHttpClient<IPOIService, POIService>(client => {
-    client.BaseAddress = new Uri(apiUrl);
-});
-
-// AUTH
+// ======================
+// ✅ AUTH
+// ======================
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
-    .AddCookie(options => {
+    .AddCookie(options =>
+    {
         options.LoginPath = "/Account/Login";
         options.AccessDeniedPath = "/Account/AccessDenied";
     });
 
 builder.Services.AddAuthorization();
 
+// ======================
+// OTHER
+// ======================
+builder.Services.AddHttpContextAccessor();
+
 var app = builder.Build();
 
-// 4. PIPELINE
+// ======================
+// 3. PIPELINE
+// ======================
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
@@ -58,11 +94,12 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();
 
-// THỨ TỰ PHẢI ĐÚNG: Session -> Auth -> Authorization
+// ⚠️ THỨ TỰ RẤT QUAN TRỌNG
 app.UseSession();
 app.UseAuthentication();
 app.UseAuthorization();
 
+// ROUTE
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Account}/{action=Login}/{id?}");
