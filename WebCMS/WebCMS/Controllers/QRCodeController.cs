@@ -1,8 +1,11 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 
 namespace WebCMS.Controllers
 {
+    // 🔥 Bắt buộc đăng nhập mới được vào
+    [Authorize(Roles = "admin,owner")]
     public class QRCodeController : Controller
     {
         private readonly IConfiguration _configuration;
@@ -17,26 +20,21 @@ namespace WebCMS.Controllers
             var apiUrl = _configuration["ApiSettings:BaseUrl"];
             ViewBag.ApiUrl = string.IsNullOrEmpty(apiUrl) ? "https://gzm4vrwg-7054.asse.devtunnels.ms/api/" : apiUrl;
 
-            var currentUserId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value
-                                ?? HttpContext.Session.GetString("UserID");
-            var userRole = User.IsInRole("owner") ? "owner" : HttpContext.Session.GetString("Role");
-
-            ViewBag.CurrentUserId = currentUserId;
-            ViewBag.UserRole = userRole;
+            // 🔥 Lấy thông tin từ Cookie (Claims), xóa sạch rác của Session cũ
+            ViewBag.CurrentUserId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            ViewBag.UserRole = User.IsInRole("admin") ? "admin" : "owner";
 
             return View();
         }
+
         public IActionResult Create()
         {
             var apiUrl = _configuration["ApiSettings:BaseUrl"];
             ViewBag.ApiUrl = string.IsNullOrEmpty(apiUrl) ? "https://gzm4vrwg-7054.asse.devtunnels.ms/api/" : apiUrl;
 
-            var currentUserId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value
-                                ?? HttpContext.Session.GetString("UserID");
-            var userRole = User.IsInRole("owner") ? "owner" : HttpContext.Session.GetString("Role");
-
-            ViewBag.CurrentUserId = currentUserId;
-            ViewBag.UserRole = userRole;
+            // 🔥 Lấy thông tin từ Cookie (Claims)
+            ViewBag.CurrentUserId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            ViewBag.UserRole = User.IsInRole("admin") ? "admin" : "owner";
 
             return View();
         }

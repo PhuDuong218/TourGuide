@@ -8,7 +8,7 @@ namespace WebCMS.Models
     public class OwnerRequest
     {
         [Key]
-        public int RequestID { get; set; }
+        public string RequestID { get; set; } = string.Empty;
         public string? FullName { get; set; }
         public string? Phone { get; set; }
         public string? Email { get; set; }

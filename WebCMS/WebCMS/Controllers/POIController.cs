@@ -28,45 +28,36 @@ namespace WebCMS.Controllers
         public async Task<IActionResult> Index()
         {
             var pois = await _poiService.GetAllAsync();
-            var visitHistory = await _visitHistoryService.GetAllAsync();
-
-            // ✅ FIX: dùng Claims thay vì Session
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
+            // 1. Phân quyền Owner chỉ thấy điểm của mình (Admin thì đi thẳng qua, thấy hết)
             if (User.IsInRole("owner"))
             {
-                pois = pois.Where(p => p.OwnerID == userId).ToList();
-
-                visitHistory = visitHistory
-                    .Where(v => pois.Any(p => p.POIID == v.POIID))
-                    .ToList();
+                // Thêm .Trim() vào cả 2 vế để so sánh chính xác tuyệt đối
+                pois = pois.Where(p => p.OwnerID != null && p.OwnerID.Trim() == userId.Trim()).ToList();
             }
 
-            ViewBag.ActiveUsers = visitHistory
-                .Where(v => !string.IsNullOrEmpty(v.UserID))
-                .Select(v => v.UserID)
-                .Distinct()
-                .Count();
+            // 2. Tính Tổng số Bản Dịch của các điểm đang hiển thị
+            int totalTranslations = 0;
+            foreach (var poi in pois)
+            {
+                var translations = await _translationService.GetByPOIAsync(poi.POIID);
+                if (translations != null)
+                {
+                    totalTranslations += translations.Count();
+                }
+            }
+            ViewBag.TotalTranslations = totalTranslations;
 
-            var topPoiId = visitHistory
-                .Where(v => v.ScanMethod == "QR_Scan")
-                .GroupBy(v => v.POIID)
-                .OrderByDescending(g => g.Count())
-                .Select(g => g.Key)
-                .FirstOrDefault();
-
-            ViewBag.TopPOI = pois
-                .FirstOrDefault(p => p.POIID == topPoiId)
-                ?.RestaurantName ?? "N/A";
-
+            // 3. Map sang DTO để hiển thị giao diện
             var poiDtos = pois.Select(p => new POIDTO
             {
-                POIID = p.POIID,                                   // ✅ Id → POIID
+                POIID = p.POIID,
                 RestaurantName = p.RestaurantName ?? "Chưa đặt tên",
                 Latitude = (decimal)p.Latitude,
                 Longitude = (decimal)p.Longitude,
                 Category = p.Category ?? "Chưa phân loại",
-                Img = !string.IsNullOrEmpty(p.Img)            // ✅ Image → Img
+                Img = !string.IsNullOrEmpty(p.Img)
                     ? $"https://gzm4vrwg-7054.asse.devtunnels.ms/uploads/{p.Img}"
                     : null,
                 ViewCount = p.ViewCount,
@@ -79,15 +70,33 @@ namespace WebCMS.Controllers
 
         // ================= CREATE =================
         [HttpGet]
-        public IActionResult Create() => View();
+        public IActionResult Create()
+        {
+            // 🔥 NẾU LÀ ADMIN: Gửi danh sách các Owner ra giao diện để Admin chọn
+            if (User.IsInRole("admin"))
+            {
+                // Tạm thời hardcode danh sách Owner giống bên AccountController để demo
+                // Sau này bạn có DB thì gọi từ DB lên nhé: await _userService.GetOwnersAsync()
+                ViewBag.OwnerList = new List<dynamic>
+                {
+                    new { UserID = "U002", Username = "owner1" },
+                    new { UserID = "U005", Username = "owner2" }
+                };
+            }
+            return View();
+        }
 
         [HttpPost]
         public async Task<IActionResult> Create(POI poi, IFormFile? imageFile)
         {
             try
             {
-                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-                poi.OwnerID = userId;                           // ✅ string? = string?
+                // 🔥 NẾU LÀ OWNER: Ép cứng ID của Owner đó (không quan tâm form gửi lên gì)
+                if (User.IsInRole("owner"))
+                {
+                    poi.OwnerID = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                }
+                // 🔥 NẾU LÀ ADMIN: poi.OwnerID đã tự động được lấy từ thẻ <select> trên giao diện (View) do Admin chọn!
 
                 await _poiService.CreateAsync(poi, imageFile);
                 return RedirectToAction("Index");
@@ -108,6 +117,7 @@ namespace WebCMS.Controllers
 
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
+            // Chặn Owner sửa POI của người khác (Admin thì được phép)
             if (User.IsInRole("owner") && poi.OwnerID != userId)
                 return Forbid();
 
@@ -122,10 +132,17 @@ namespace WebCMS.Controllers
 
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
+            // Chặn Owner lưu POI của người khác
             if (User.IsInRole("owner") && existingPoi.OwnerID != userId)
                 return Forbid();
 
-            poi.POIID = id;                                        // ✅ Id thay vì POIID
+            poi.POIID = id;
+
+            // Giữ nguyên OwnerID cũ nếu người sửa là Owner (tránh bị hack đổi OwnerID qua giao diện)
+            if (User.IsInRole("owner"))
+            {
+                poi.OwnerID = userId;
+            }
 
             try
             {
@@ -148,6 +165,7 @@ namespace WebCMS.Controllers
 
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
+            // Chặn Owner xóa POI của người khác
             if (User.IsInRole("owner") && poi.OwnerID != userId)
                 return Forbid();
 
@@ -156,15 +174,15 @@ namespace WebCMS.Controllers
         }
 
         // ================= TRANSLATION =================
+        // (Các hàm Translation tôi giữ nguyên vì logic chặn chặn quyền truy cập của bạn đã rất tốt rồi)
+
         public async Task<IActionResult> Translation(string id)
         {
             var poi = await _poiService.GetByIdAsync(id);
             if (poi == null) return NotFound();
 
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-
-            if (User.IsInRole("owner") && poi.OwnerID != userId)
-                return Forbid();
+            if (User.IsInRole("owner") && poi.OwnerID != userId) return Forbid();
 
             var list = await _translationService.GetByPOIAsync(id);
             ViewBag.POIID = id;
@@ -177,9 +195,7 @@ namespace WebCMS.Controllers
             if (poi == null) return NotFound();
 
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-
-            if (User.IsInRole("owner") && poi.OwnerID != userId)
-                return Forbid();
+            if (User.IsInRole("owner") && poi.OwnerID != userId) return Forbid();
 
             ViewBag.POIID = poiId;
             return View();
@@ -192,9 +208,7 @@ namespace WebCMS.Controllers
             if (poi == null) return NotFound();
 
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-
-            if (User.IsInRole("owner") && poi.OwnerID != userId)
-                return Forbid();
+            if (User.IsInRole("owner") && poi.OwnerID != userId) return Forbid();
 
             await _translationService.CreateAsync(t);
             return RedirectToAction("Translation", new { id = t.POIID });
@@ -206,29 +220,18 @@ namespace WebCMS.Controllers
             if (poi == null) return NotFound();
 
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-
-            if (User.IsInRole("owner") && poi.OwnerID != userId)
-                return Forbid();
+            if (User.IsInRole("owner") && poi.OwnerID != userId) return Forbid();
 
             await _translationService.DeleteAsync(poiId, lang);
             return RedirectToAction("Translation", new { id = poiId });
         }
 
-        // --- THÊM CHỨC NĂNG SỬA BẢN DỊCH ---
-
         [HttpGet]
         public async Task<IActionResult> EditTranslation(string poiId, string lang)
         {
-            // Lấy toàn bộ bản dịch của POI này
             var listTrans = await _translationService.GetByPOIAsync(poiId);
-
-            // Tìm ra bản dịch có ngôn ngữ (lang) tương ứng để đem đi sửa
             var translation = listTrans.FirstOrDefault(t => t.LanguageCode == lang);
-            if (translation == null)
-            {
-                return NotFound();
-            }
-
+            if (translation == null) return NotFound();
             return View(translation);
         }
 
@@ -237,14 +240,10 @@ namespace WebCMS.Controllers
         {
             if (ModelState.IsValid)
             {
-                // Gọi Service để cập nhật xuống Database
-                // (Lưu ý: Đảm bảo trong TranslationService của bạn đã có hàm UpdateAsync nhé)
                 await _translationService.UpdateAsync(model);
-
                 return RedirectToAction("Translation", new { id = model.POIID });
             }
             return View(model);
         }
-
     }
 }

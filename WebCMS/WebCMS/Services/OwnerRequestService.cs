@@ -18,14 +18,17 @@ namespace WebCMS.Services
                    ?? new List<OwnerRequest>();
         }
 
-        public async Task ApproveAsync(int id)
+        // Trong file OwnerRequestService.cs
+        public async Task<bool> ApproveAsync(string id) // Đổi int -> string
         {
-            await _http.PostAsync($"OwnerRequest/Approve/{id}", null);
+            var response = await _http.PostAsync($"api/OwnerRequest/Approve/{id}", null);
+            return response.IsSuccessStatusCode;
         }
 
-        public async Task RejectAsync(int id)
+        public async Task<bool> RejectAsync(string id) // Đổi int -> string
         {
-            await _http.PostAsync($"OwnerRequest/Reject/{id}", null);
+            var response = await _http.PostAsync($"api/OwnerRequest/Reject/{id}", null);
+            return response.IsSuccessStatusCode;
         }
     }
 }

@@ -101,6 +101,11 @@
                         <span class="nav-icon"><i class="fa-solid fa-users"></i></span>
                         <span class="nav-label">Quản lý người dùng</span>
                     </a>
+
+                    <a asp-controller="OwnerRegistration" asp-action="Index" class="nav-link-item @(ctx == "OwnerRegistration" ? "active" : "")">
+                        <span class="nav-icon"><i class="fa-solid fa-clipboard-user"></i></span>
+                        <span class="nav-label">Duyệt yêu cầu</span>
+                    </a>
                 }
 
                 <a asp-controller="Account" asp-action="Logout" class="nav-link-item nav-danger">

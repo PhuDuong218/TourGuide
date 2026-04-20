@@ -65,6 +65,22 @@
                     <div class="form-hint">Khoảng 108.320 – 108.340 (Hội An)</div>
                 </div>
             </div>
+            @if (User.IsInRole("admin"))
+            {
+                <div class="mb-3">
+                    <label class="form-label" style="font-weight: 600;">Giao cho Chủ quán (Owner) *</label>
+                    <select name="OwnerID" class="form-select" required>
+                        <option value="">-- Chọn Chủ quán quản lý địa điểm này --</option>
+                        @if (ViewBag.OwnerList != null)
+                        {
+                            foreach (var owner in ViewBag.OwnerList)
+                            {
+                                <option value="@owner.UserID">@owner.Username</option>
+                            }
+                        }
+                    </select>
+                </div>
+            }
 
             <div class="form-group">
                 <label class="form-label-admin">Địa chỉ</label>

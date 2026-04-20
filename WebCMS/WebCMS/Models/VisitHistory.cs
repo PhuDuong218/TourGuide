@@ -7,6 +7,7 @@
         public string POIID { get; set; } = string.Empty;
         public DateTime VisitTime { get; set; }
         public string? ScanMethod { get; set; }
+        public string? OwnerID { get; set; }
 
         public string? POIName { get; set; }
         public string? Username { get; set; }

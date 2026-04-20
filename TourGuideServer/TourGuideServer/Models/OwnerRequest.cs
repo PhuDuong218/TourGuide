@@ -1,17 +1,17 @@
-﻿using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
+﻿using System;
+using System.ComponentModel.DataAnnotations; // 🔥 BẮT BUỘC phải có dòng này
 
 namespace TourGuideServer.Models
 {
-    [Table("OwnerRequests")]
     public class OwnerRequest
     {
-        [Key]
-        public int RequestID { get; set; }
-        public string? FullName { get; set; }
-        public string? Phone { get; set; }
+        [Key] // 🔥 Thêm dòng này để báo cho EF biết đây là Khóa chính
+        public string RequestID { get; set; } = string.Empty;
+
+        public string FullName { get; set; } = string.Empty;
+        public string Phone { get; set; } = string.Empty;
         public string? Email { get; set; }
-        public string? PlaceName { get; set; }
+        public string PlaceName { get; set; } = string.Empty;
         public string? Address { get; set; }
         public string? Status { get; set; }
         public DateTime? CreatedAt { get; set; }

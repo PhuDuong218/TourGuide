@@ -16,7 +16,35 @@ namespace TourGuideServer.Controllers
             _context = context;
         }
 
-        // Lấy danh sách yêu cầu (Mới nhất xếp lên đầu)
+        // 🟢 1. CỔNG NHẬN (App MAUI gọi hàm này)
+        [HttpPost]
+        public async Task<IActionResult> Create([FromBody] OwnerRequest request)
+        {
+            try
+            {
+                // 1. TỰ TẠO ID (Vì nvarchar(10) không tự tăng)
+                var count = await _context.OwnerRequests.CountAsync();
+                // Tạo mã kiểu REQ001, REQ002...
+                request.RequestID = "REQ" + (count + 1).ToString("D3");
+
+                // 2. Gán các giá trị mặc định
+                request.Status = "Pending";
+                request.CreatedAt = DateTime.Now;
+
+                _context.OwnerRequests.Add(request);
+                await _context.SaveChangesAsync();
+
+                return Ok(new { message = "Gửi thành công!", id = request.RequestID });
+            }
+            catch (Exception ex)
+            {
+                // Trả về lỗi chi tiết từ SQL để dễ debug
+                var innerError = ex.InnerException?.Message ?? ex.Message;
+                return BadRequest(new { message = innerError });
+            }
+        }
+
+        // 🔵 2. LẤY DANH SÁCH (Web Admin gọi hàm này)
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
@@ -26,7 +54,7 @@ namespace TourGuideServer.Controllers
             return Ok(data);
         }
 
-        // Đổi trạng thái thành Đã duyệt
+        // 🟡 3. DUYỆT YÊU CẦU
         [HttpPost("Approve/{id}")]
         public async Task<IActionResult> Approve(int id)
         {
@@ -35,10 +63,10 @@ namespace TourGuideServer.Controllers
 
             req.Status = "Approved";
             await _context.SaveChangesAsync();
-            return Ok();
+            return Ok(new { message = "Đã duyệt!" });
         }
 
-        // Đổi trạng thái thành Từ chối
+        // 🔴 4. TỪ CHỐI YÊU CẦU
         [HttpPost("Reject/{id}")]
         public async Task<IActionResult> Reject(int id)
         {
@@ -47,7 +75,7 @@ namespace TourGuideServer.Controllers
 
             req.Status = "Rejected";
             await _context.SaveChangesAsync();
-            return Ok();
+            return Ok(new { message = "Đã từ chối!" });
         }
     }
 }

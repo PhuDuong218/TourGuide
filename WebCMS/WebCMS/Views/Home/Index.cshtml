@@ -50,7 +50,7 @@
         <div class="card border-0 shadow-sm p-3" style="border-left: 5px solid #0d6efd !important;">
             <div class="text-muted small fw-bold">ĐANG TRUY CẬP (REAL-TIME)</div>
             <div class="d-flex justify-content-between align-items-center mt-2">
-                <h2 class="fw-bold mb-0" style="color: #0d6efd;">@Model.ActiveToday</h2>
+                <h2 class="fw-bold mb-0" id="active-count-val" style="color: #0d6efd;">@Model.ActiveToday</h2>
                 <i class="fa-solid fa-user-check text-primary fs-3"></i>
             </div>
         </div>
@@ -85,108 +85,96 @@
 
 @section Scripts {
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/6.0.1/signalr.min.js"></script>
+
     <script>
         document.addEventListener("DOMContentLoaded", function() {
-            // HÀM CẬP NHẬT RIÊNG Ô NGƯỜI DÙNG HOẠT ĐỘNG
-            function updateActiveUsers() {
-                fetch('/Home/GetRealTimeActiveUsers')
-                    .then(response => response.json())
-                    .then(data => {
-                        const element = document.getElementById('active-count-val');
-                        if (element) {
-                            element.innerText = data.count;
-                        }
-                    })
-                    .catch(err => console.error("Lỗi cập nhật real-time:", err));
+
+            // ==========================================
+            // 1. CHỨC NĂNG REAL-TIME (SIGNALR)
+            // ==========================================
+            try {
+                // Đổi URL này nếu link devtunnels của Server bạn bị thay đổi
+                const hubConnection = new signalR.HubConnectionBuilder()
+                    .withUrl("https://gzm4vrwg-7054.asse.devtunnels.ms/activeUserHub")
+                    .withAutomaticReconnect()
+                    .build();
+
+                hubConnection.on("UpdateOnlineCount", function (count) {
+                    console.log("SignalR: Nhận được số người dùng mới ->", count);
+                    const element = document.getElementById('active-count-val');
+                    if (element) {
+                        element.innerText = count;
+                        // Hiệu ứng nháy xanh
+                        element.style.transition = "color 0.3s";
+                        element.style.color = "#22c55e";
+                        setTimeout(() => element.style.color = "#0d6efd", 1000);
+                    }
+                });
+
+                hubConnection.start()
+                    .then(() => console.log("SignalR: Đã kết nối thành công tới Server!"))
+                    .catch(err => console.error("SignalR: Lỗi kết nối ->", err));
+            } catch (e) {
+                console.error("Lỗi khởi tạo SignalR:", e);
             }
 
-            // Chạy cập nhật mỗi 3 giây (3000ms)
-            setInterval(updateActiveUsers, 3000);
+            // ==========================================
+            // 2. BIỂU ĐỒ XU HƯỚNG 7 NGÀY
+            // ==========================================
+            try {
+                // Gán dữ liệu C# ra biến JS an toàn
+                const trendLabels = @Html.Raw(Json.Serialize(Model?.TrendLabels ?? new List<string>()));
+                const installTrend = @Html.Raw(Json.Serialize(Model?.InstallTrend ?? new List<int>()));
+                const activeTrend = @Html.Raw(Json.Serialize(Model?.ActiveTrend ?? new List<int>()));
+                const scanTrend = @Html.Raw(Json.Serialize(Model?.ScanTrend ?? new List<int>()));
+
+                const usageCtx = document.getElementById('usageChart').getContext('2d');
+                new Chart(usageCtx, {
+                    type: 'line',
+                    data: {
+                        labels: trendLabels,
+                        datasets: [
+                            { label: 'Cài đặt', data: installTrend, borderColor: '#3b82f6', backgroundColor: '#3b82f6', tension: 0.3, fill: false },
+                            { label: 'Hoạt động', data: activeTrend, borderColor: '#10b981', backgroundColor: '#10b981', tension: 0.3, fill: false },
+                            { label: 'Quét QR', data: scanTrend, borderColor: '#f59e0b', backgroundColor: '#f59e0b', tension: 0.3, fill: false }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { position: 'top' } }
+                    }
+                });
+            } catch (e) { console.error("Lỗi vẽ biểu đồ Line:", e); }
 
             // ==========================================
-            // BIỂU ĐỒ 1: XU HƯỚNG USAGE 7 NGÀY
+            // 3. BIỂU ĐỒ TOP 5 ĐỊA ĐIỂM
             // ==========================================
-            const usageCtx = document.getElementById('usageChart').getContext('2d');
-            new Chart(usageCtx, {
-                type: 'line',
-                data: {
-                    labels: @Html.Raw(Json.Serialize(Model.TrendLabels)),
-                    datasets: [
-                        {
-                            label: 'Cài đặt',
-                            data: @Html.Raw(Json.Serialize(Model.InstallTrend)),
-                            borderColor: '#3b82f6',
-                            backgroundColor: '#3b82f6',
-                            borderWidth: 2,
-                            tension: 0.3,
-                            pointRadius: 4,
-                            fill: false
-                        },
-                        {
-                            label: 'Hoạt động',
-                            data: @Html.Raw(Json.Serialize(Model.ActiveTrend)),
-                            borderColor: '#10b981',
-                            backgroundColor: '#10b981',
-                            borderWidth: 2,
-                            tension: 0.3,
-                            pointRadius: 4,
-                            fill: false
-                        },
-                        {
-                            label: 'Quét QR',
-                            data: @Html.Raw(Json.Serialize(Model.ScanTrend)),
-                            borderColor: '#f59e0b',
-                            backgroundColor: '#f59e0b',
-                            borderWidth: 2,
-                            tension: 0.3,
-                            pointRadius: 4,
-                            fill: false
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { position: 'top' } },
-                    scales: {
-                        y: { beginAtZero: true, grid: { color: '#f3f4f6' } },
-                        x: { grid: { display: false } }
-                    }
-                }
-            });
+            try {
+                const chartLabels = @Html.Raw(Json.Serialize(Model?.ChartLabels ?? new List<string>()));
+                const chartValues = @Html.Raw(Json.Serialize(Model?.ChartValues ?? new List<int>()));
 
-            // ==========================================
-            // BIỂU ĐỒ 2: TOP 5 ĐỊA ĐIỂM
-            // ==========================================
-            const topCtx = document.getElementById('topPoiChart').getContext('2d');
-            new Chart(topCtx, {
-                type: 'bar',
-                data: {
-                    labels: @Html.Raw(Json.Serialize(Model.ChartLabels)),
-                    datasets: [{
-                        label: 'Lượt nghe',
-                        data: @Html.Raw(Json.Serialize(Model.ChartValues)),
-                        backgroundColor: [
-                            '#7dd3fc', '#f9a8d4', '#fde047', '#5eead4', '#c4b5fd'
-                        ],
-                        borderRadius: 4,
-                        barPercentage: 0.6
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            grid: { borderDash: [4, 4], color: '#e5e7eb' },
-                            ticks: { stepSize: 2 }
-                        },
-                        x: { grid: { display: false } }
+                const topCtx = document.getElementById('topPoiChart').getContext('2d');
+                new Chart(topCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: chartLabels,
+                        datasets: [{
+                            label: 'Lượt nghe',
+                            data: chartValues,
+                            backgroundColor: ['#7dd3fc', '#f9a8d4', '#fde047', '#5eead4', '#c4b5fd'],
+                            borderRadius: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } }
                     }
-                }
-            });
+                });
+            } catch (e) { console.error("Lỗi vẽ biểu đồ Bar:", e); }
+
         });
     </script>
 }

@@ -1,7 +1,8 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using TourGuideServer.Data;
-using TourGuideServer.Services;
 using System.Text.Json.Serialization;
+using TourGuideServer.Data;
+using TourGuideServer.Hubs;
+using TourGuideServer.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -29,19 +30,23 @@ builder.Services.AddControllers()
         // Cho phép đọc số từ chuỗi nếu cần
         options.JsonSerializerOptions.NumberHandling = JsonNumberHandling.AllowReadingFromString;
     });
-
+builder.Services.AddSignalR();
 // 5. CORS — Cho phép tất cả các nguồn gọi API
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowAll", policy =>
-        policy.AllowAnyOrigin()
-              .AllowAnyMethod()
-              .AllowAnyHeader());
+    options.AddPolicy("AllowAll", builder =>
+    {
+        builder.SetIsOriginAllowed(_ => true) // Chấp nhận mọi tên miền gọi tới
+               .AllowAnyMethod()
+               .AllowAnyHeader()
+               .AllowCredentials();           // Dòng này CỰC KỲ QUAN TRỌNG cho SignalR
+    });
 });
 
 // 6. Swagger
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
 
 var app = builder.Build();
 
@@ -62,5 +67,6 @@ app.UseCors("AllowAll");
 app.UseAuthorization();
 
 app.MapControllers();
+app.MapHub<ActiveUserHub>("/activeUserHub");
 
 app.Run();

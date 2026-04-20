@@ -123,6 +123,7 @@ namespace TourGuideServer.Controllers
             poi.Latitude = updatedPoi.Latitude;
             poi.Longitude = updatedPoi.Longitude;
             poi.Category = updatedPoi.Category;
+            poi.OwnerID = updatedPoi.OwnerID;
 
             // 2. Xử lý lưu file ảnh (nếu có chọn ảnh mới)
             if (imageFile != null && imageFile.Length > 0)

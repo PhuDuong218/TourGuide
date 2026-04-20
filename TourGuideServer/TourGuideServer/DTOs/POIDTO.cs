@@ -11,7 +11,7 @@
         public string? Address { get; set; }
         public string? Category { get; set; }
         public string? Img { get; set; }
-
+        public string? OwnerID { get; set; }
         public int ViewCount { get; set; }
         public int ListenCount { get; set; }
         public int Priority { get; set; }

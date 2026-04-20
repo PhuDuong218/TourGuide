@@ -83,10 +83,11 @@ public partial class ScannerPage : ContentPage
             try
             {
                 using var client = new HttpClient();
+                string? currentUserId = Preferences.Get("LoggedInUserId", null);
                 var historyData = new
                 {
                     POIID = found.POIID,
-                    UserID = "U003",
+                    UserID = currentUserId,
                     ScanMethod = "QR_Scan",
                     UserLat = found.Latitude,
                     UserLon = found.Longitude

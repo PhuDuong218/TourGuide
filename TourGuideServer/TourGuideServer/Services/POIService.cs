@@ -22,6 +22,7 @@ namespace TourGuideServer.Services
             return new POIDTO
             {
                 POIID = p.POIID,
+                OwnerID = p.OwnerID,
                 Latitude = p.Latitude,
                 Longitude = p.Longitude,
                 Address = p.Address,

@@ -6,7 +6,6 @@ namespace TourGuideMauiApp.Views;
 
 public partial class LoginPage : ContentPage
 {
-    // CỰC KỲ QUAN TRỌNG: Thay URL này bằng link Dev Tunnels của Server API của bạn
     private readonly string ApiBaseUrl = "https://gzm4vrwg-7054.asse.devtunnels.ms/api";
 
     public LoginPage()
@@ -14,11 +13,14 @@ public partial class LoginPage : ContentPage
         InitializeComponent();
     }
 
-    // Lớp để hứng dữ liệu ID từ Server trả về
+    // 1. CẬP NHẬT: Thêm thuộc tính Role để hứng dữ liệu từ API
     public class LoginResponse
     {
         [JsonPropertyName("userId")]
         public string? UserId { get; set; }
+
+        [JsonPropertyName("role")]
+        public string? Role { get; set; }
     }
 
     private async void OnLoginClicked(object sender, EventArgs e)
@@ -37,22 +39,31 @@ public partial class LoginPage : ContentPage
             using var client = new HttpClient();
             var loginData = new { Username = username, Password = password };
 
-            // Gọi API kiểm tra trong Database
             var response = await client.PostAsJsonAsync($"{ApiBaseUrl}/Auth/login", loginData);
 
             if (response.IsSuccessStatusCode)
             {
-                // Nếu API trả về OK (đúng tài khoản)
                 var result = await response.Content.ReadFromJsonAsync<LoginResponse>();
 
                 if (result != null && !string.IsNullOrEmpty(result.UserId))
                 {
-                    // Lưu đúng mã UserID từ Database (VD: U001, U002) vào máy
-                    AuthHelper.Login(result.UserId);
+                    // 2. KIỂM TRA QUYỀN (ROLE)
+                    // Chuyển về chữ thường để so sánh cho chính xác
+                    string userRole = result.Role?.ToLower() ?? "";
 
+                    if (userRole == "admin" || userRole == "owner")
+                    {
+                        // Hiển thị thông báo chặn Admin/Owner
+                        await DisplayAlert("Từ chối truy cập",
+                            "Tài khoản Admin/Owner chỉ dành cho Web quản trị. Vui lòng sử dụng tài khoản User trên di động!",
+                            "OK");
+                        return; // Thoát hàm, không cho vào AppShell
+                    }
+
+                    // Nếu không phải admin/owner (tức là user), thì cho phép vào
+                    AuthHelper.Login(result.UserId);
                     await DisplayAlert("Thành công", "Đăng nhập thành công!", "OK");
 
-                    // ĐÃ SỬA: Đổi màn hình bằng cách can thiệp vào Window hiện tại (Chuẩn .NET 9)
                     if (Application.Current?.Windows.Count > 0)
                     {
                         Application.Current.Windows[0].Page = new AppShell();
@@ -61,27 +72,22 @@ public partial class LoginPage : ContentPage
             }
             else
             {
-                // Nếu API trả về lỗi 401 Unauthorized
                 await DisplayAlert("Thất bại", "Sai tên đăng nhập hoặc mật khẩu", "OK");
             }
         }
-        catch (Exception)
+        catch (Exception ex)
         {
-            await DisplayAlert("Lỗi mạng", "Không thể kết nối đến máy chủ. Vui lòng kiểm tra lại mạng hoặc URL API.", "OK");
+            await DisplayAlert("Lỗi mạng", "Không thể kết nối đến máy chủ. Lỗi: " + ex.Message, "OK");
         }
     }
 
     private async void OnGuestClicked(object sender, EventArgs e)
     {
-        // Xóa thông tin đăng nhập cũ (nếu có) để ép app dùng Device ID ẩn danh
         AuthHelper.Logout();
-
-        // Gọi hàm để tự sinh mã khách (DEV-xxx) lưu vào máy
         AuthHelper.GetCurrentUserId();
 
         await DisplayAlert("Xin chào", "Bạn đang dùng app với tư cách khách.", "OK");
 
-        // ĐÃ SỬA: Đổi màn hình bằng cách can thiệp vào Window hiện tại (Chuẩn .NET 9)
         if (Application.Current?.Windows.Count > 0)
         {
             Application.Current.Windows[0].Page = new AppShell();
@@ -90,7 +96,6 @@ public partial class LoginPage : ContentPage
 
     private async void OnRegisterTapped(object sender, EventArgs e)
     {
-        // Mở trang đăng ký dưới dạng một màn hình đè lên (Modal)
         await Navigation.PushModalAsync(new RegisterPage());
     }
 }
