@@ -12,22 +12,27 @@ namespace WebCMS.Services
             _http = http;
         }
 
+        // 🟢 LẤY DANH SÁCH YÊU CẦU
         public async Task<List<OwnerRequest>> GetAllAsync()
         {
+            // Bỏ chữ "api/" đi vì BaseAddress đã có sẵn
             return await _http.GetFromJsonAsync<List<OwnerRequest>>("OwnerRequest")
                    ?? new List<OwnerRequest>();
         }
 
-        // Trong file OwnerRequestService.cs
-        public async Task<bool> ApproveAsync(string id) // Đổi int -> string
+        // 🟡 DUYỆT YÊU CẦU
+        public async Task<bool> ApproveAsync(string id)
         {
-            var response = await _http.PostAsync($"api/OwnerRequest/Approve/{id}", null);
+            // Bỏ chữ "api/" đi vì BaseAddress đã có sẵn
+            var response = await _http.PostAsync($"OwnerRequest/Approve/{id}", null);
             return response.IsSuccessStatusCode;
         }
 
-        public async Task<bool> RejectAsync(string id) // Đổi int -> string
+        // 🔴 TỪ CHỐI YÊU CẦU
+        public async Task<bool> RejectAsync(string id)
         {
-            var response = await _http.PostAsync($"api/OwnerRequest/Reject/{id}", null);
+            // Bỏ chữ "api/" đi vì BaseAddress đã có sẵn
+            var response = await _http.PostAsync($"OwnerRequest/Reject/{id}", null);
             return response.IsSuccessStatusCode;
         }
     }

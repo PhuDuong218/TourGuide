@@ -17,33 +17,10 @@ public class GeofenceService
         _triggeredPois.Clear();
     }
 
-    // HÀM ĐÁNH GIÁ ĐỘ ƯU TIÊN (Điểm càng nhỏ càng ưu tiên)
     private int GetPriorityScore(POIDTO poi)
     {
-        // Chuyển về chữ thường để dễ so sánh
-        string cat = (poi.CategoryName ?? "").ToLower();
-
-        // Ưu tiên 1: Tham quan cốt lõi (Lịch sử, Văn hóa, Cảnh quan, Tâm linh)
-        if (cat.Contains("di tích") ||
-            cat.Contains("bảo tàng") ||
-            cat.Contains("danh lam") ||
-            cat.Contains("tâm linh"))
-            return 1;
-
-        // Ưu tiên 2: Hoạt động (Chợ, Mua sắm, Giải trí, Công viên)
-        if (cat.Contains("chợ") ||
-            cat.Contains("mua sắm") ||
-            cat.Contains("giải trí") ||
-            cat.Contains("công viên"))
-            return 2;
-
-        // Ưu tiên 3: Dịch vụ Ăn uống
-        if (cat.Contains("quán ăn") ||
-            cat.Contains("ẩm thực"))
-            return 3;
-
-        // Ưu tiên bét: Khác và các điểm chưa phân loại
-        return 99;
+        // Trả về giá trị từ cột Priority trong Database
+        return poi.Priority;
     }
 
     public void CheckProximity(Location userLocation)
@@ -74,19 +51,18 @@ public class GeofenceService
         }
 
         // ========================================================
-        // ÁP DỤNG THUẬT TOÁN ƯU TIÊN ĐA TẦNG (MULTI-LEVEL SORTING)
+        // THUẬT TOÁN ƯU TIÊN: SỐ LỚN PHÁT TRƯỚC
         // ========================================================
         if (poisInRange.Count > 0)
         {
             var prioritizedPoi = poisInRange
-                // Tầng 1: Ưu tiên địa điểm Quan trọng nhất trước (Điểm số nhỏ nhất)
-                .OrderBy(p => GetPriorityScore(p.Poi))
+                // 🔥 Tầng 1: Sắp xếp giảm dần (Descending) - Số lớn nhất đứng đầu
+                .OrderByDescending(p => GetPriorityScore(p.Poi))
 
-                // Tầng 2: Nếu cùng độ quan trọng, thì chọn cái Gần nhất
+                // Tầng 2: Nếu cùng Priority, ưu tiên cái gần người dùng nhất (Tăng dần theo khoảng cách)
                 .ThenBy(p => p.Distance)
 
-                // Tầng 3 (Xử lý trùng lặp hoàn toàn): 
-                // Nếu khoảng cách bằng nhau y chang, ưu tiên theo Tên A-Z
+                // Tầng 3: Nếu vẫn bằng nhau, sắp xếp theo tên
                 .ThenBy(p => p.Poi.RestaurantName)
 
                 .First().Poi;

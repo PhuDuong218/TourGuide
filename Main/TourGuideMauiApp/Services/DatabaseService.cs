@@ -87,4 +87,19 @@ public class DatabaseService
             return false;
         }
     }
+    // Thêm vào file DatabaseService.cs
+    public async Task<bool> SaveVisitHistoryAsync(object historyData)
+    {
+        try
+        {
+            // Sử dụng _httpClient đã được cấu hình BaseAddress sẵn
+            var response = await _httpClient.PostAsJsonAsync("api/VisitHistory", historyData);
+            return response.IsSuccessStatusCode;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine(@"[DB] Lỗi lưu lịch sử: " + ex.Message);
+            return false;
+        }
+    }
 }

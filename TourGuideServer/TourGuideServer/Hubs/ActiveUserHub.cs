@@ -11,6 +11,8 @@ namespace TourGuideServer.Hubs
         public override async Task OnConnectedAsync()
         {
             CurrentOnlineCount++;
+
+
             await Clients.All.SendAsync("UpdateOnlineCount", CurrentOnlineCount);
             await base.OnConnectedAsync();
         }

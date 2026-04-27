@@ -9,14 +9,13 @@ namespace WebCMS.Controllers
     [Authorize(Roles = "admin")]
     public class OwnerRegistrationController : Controller
     {
-        private readonly OwnerRequestService _service; // Gọi đúng tên Service của bạn
+        private readonly OwnerRequestService _service;
 
         public OwnerRegistrationController(OwnerRequestService service)
         {
             _service = service;
         }
 
-        // Hiển thị danh sách
         public async Task<IActionResult> Index()
         {
             var requests = await _service.GetAllAsync();
@@ -29,18 +28,31 @@ namespace WebCMS.Controllers
             return View(sortedRequests);
         }
 
-        // Xử lý nút Duyệt
         [HttpPost]
-        public async Task<IActionResult> Approve(string id) // Đổi int -> string
+        public async Task<IActionResult> Approve(string id)
         {
-            await _service.ApproveAsync(id);
+            bool success = await _service.ApproveAsync(id);
+            if (success)
+            {
+                TempData["SuccessMessage"] = "Đã duyệt và nâng cấp quyền Chủ quán thành công!";
+            }
+            else
+            {
+                TempData["ErrorMessage"] = "Có lỗi xảy ra khi duyệt yêu cầu.";
+            }
+
             return RedirectToAction("Index");
         }
 
         [HttpPost]
-        public async Task<IActionResult> Reject(string id) // Đổi int -> string
+        public async Task<IActionResult> Reject(string id)
         {
-            await _service.RejectAsync(id);
+            bool success = await _service.RejectAsync(id);
+            if (success)
+            {
+                TempData["SuccessMessage"] = "Đã từ chối yêu cầu.";
+            }
+
             return RedirectToAction("Index");
         }
     }

@@ -13,4 +13,6 @@ public class POIDTO
 
     public string? CategoryName { get; set; }
     public string DistanceText { get; set; } = string.Empty;
+
+    public int Priority { get; set; }
 }

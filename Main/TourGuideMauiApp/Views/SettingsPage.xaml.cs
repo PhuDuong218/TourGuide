@@ -33,7 +33,7 @@ public partial class SettingsPage : ContentPage
     }
 
     // =========================================
-    // HÀM XỬ LÝ TỐC ĐỘ ĐỌC VÀ TỰ ĐỘNG PHÁT (PHẦN BỊ THIẾU)
+    // HÀM XỬ LÝ TỐC ĐỘ ĐỌC VÀ TỰ ĐỘNG PHÁT
     // =========================================
 
     private void OnAutoPlayToggled(object sender, ToggledEventArgs e)
@@ -41,7 +41,6 @@ public partial class SettingsPage : ContentPage
         Preferences.Set("AutoPlayTTS", e.Value);
     }
 
-    // Đây chính là các hàm hệ thống đang báo thiếu (XC0002)
     private void OnSpeed05Tapped(object sender, EventArgs e) => SetSpeed(0.5);
     private void OnSpeed10Tapped(object sender, EventArgs e) => SetSpeed(1.0);
     private void OnSpeed15Tapped(object sender, EventArgs e) => SetSpeed(1.5);
@@ -69,7 +68,7 @@ public partial class SettingsPage : ContentPage
     }
 
     // =========================================
-    // HÀM XỬ LÝ NGÔN NGỮ (CỦA BẠN ĐÃ CÓ SẴN)
+    // HÀM XỬ LÝ NGÔN NGỮ
     // =========================================
 
     private void OnLangViTapped(object sender, EventArgs e) => SetLang("vi");
@@ -102,10 +101,28 @@ public partial class SettingsPage : ContentPage
     }
 
     // =========================================
-    // HÀM CHUYỂN TRANG
+    // 🔥 HÀM CHUYỂN TRANG (ĐÃ FIX CHẶN KHÁCH VÀ OWNER)
     // =========================================
     private async void OnRegisterOwnerTapped(object sender, EventArgs e)
     {
+        // 1. Chỉ cần kiểm tra xem có ID của người dùng đã đăng nhập hay không
+        string? userId = Preferences.Get("LoggedInUserId", null);
+
+        if (string.IsNullOrEmpty(userId))
+        {
+            await DisplayAlert("Yêu cầu đăng nhập", "Vui lòng đăng nhập bằng tài khoản chính thức để đăng ký trở thành Chủ quán.", "Đã hiểu");
+            return;
+        }
+
+        // 2. Kiểm tra quyền
+        string? role = Preferences.Get("UserRole", "user");
+        if (role == "owner" || role == "admin")
+        {
+            await DisplayAlert("Thông báo", "Tài khoản của bạn đã có quyền Chủ quán/Admin rồi!", "Đóng");
+            return;
+        }
+
+        // 3. Cho phép vào trang đăng ký
         await Navigation.PushAsync(new RegisterOwnerPage());
     }
 
@@ -120,7 +137,7 @@ public partial class SettingsPage : ContentPage
             // Xóa bộ nhớ
             TourGuideMauiApp.Helpers.AuthHelper.Logout();
 
-            // Tráo màn hình về lại trang Đăng nhập (Chuẩn .NET 9)
+            // Tráo màn hình về lại trang Đăng nhập
             if (Application.Current?.Windows.Count > 0)
             {
                 Application.Current.Windows[0].Page = new LoginPage();

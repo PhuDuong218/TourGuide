@@ -39,5 +39,9 @@ public static class AuthHelper
     public static void Logout()
     {
         Preferences.Remove("LoggedInUserId");
+        Preferences.Remove("UserRole");
+        Preferences.Remove("UserEmail"); // Xóa luôn email nếu có lưu
+        Preferences.Remove("AnonymousDeviceId");
+        Preferences.Remove("LoggedInUserId");
     }
 }
