@@ -34,7 +34,9 @@ namespace WebCMS.Controllers
             if (User.IsInRole("owner"))
             {
                 // Thêm .Trim() vào cả 2 vế để so sánh chính xác tuyệt đối
-                pois = pois.Where(p => p.OwnerID != null && p.OwnerID.Trim() == userId.Trim()).ToList();
+                pois = pois.Where(p => p.OwnerID != null &&
+                            userId != null &&
+                            p.OwnerID.Trim() == userId.Trim()).ToList();
             }
 
             // 2. Tính Tổng số Bản Dịch của các điểm đang hiển thị
@@ -210,7 +212,54 @@ namespace WebCMS.Controllers
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (User.IsInRole("owner") && poi.OwnerID != userId) return Forbid();
 
+            // 1. Lưu bản dịch gốc mà người dùng vừa nhập
             await _translationService.CreateAsync(t);
+
+            // ========================================================
+            // 2. TỰ ĐỘNG DỊCH SANG 3 NGÔN NGỮ CÒN LẠI BẤT KỂ NGÔN NGỮ GỐC LÀ GÌ
+            // ========================================================
+
+            // Danh sách toàn bộ 4 ngôn ngữ hệ thống hỗ trợ
+            var allLangs = new[] { "vi", "en", "fr", "ja" };
+
+            // Tự động lọc ra 3 ngôn ngữ CÒN LẠI (Khác với ngôn ngữ vừa nhập)
+            var targetLangs = allLangs.Where(l => l != t.LanguageCode).ToArray();
+
+            var translator = new GoogleTranslator();
+
+            foreach (var targetLang in targetLangs)
+            {
+                try
+                {
+                    // Truyền t.LanguageCode làm ngôn ngữ NGUỒN, targetLang làm ngôn ngữ ĐÍCH
+                    var translatedName = await translator.TranslateAsync(t.DisplayName, targetLang, t.LanguageCode);
+
+                    var translatedDesc = string.IsNullOrEmpty(t.ShortDescription)
+                                         ? ""
+                                         : (await translator.TranslateAsync(t.ShortDescription, targetLang, t.LanguageCode)).Translation;
+
+                    var translatedNarration = await translator.TranslateAsync(t.NarrationText, targetLang, t.LanguageCode);
+
+                    // Tạo object bản dịch mới cho ngôn ngữ đích
+                    var autoTrans = new POITranslation
+                    {
+                        POIID = t.POIID,
+                        LanguageCode = targetLang,
+                        DisplayName = translatedName.Translation,
+                        ShortDescription = translatedDesc,
+                        NarrationText = translatedNarration.Translation
+                    };
+
+                    // Lưu tiếp vào Database
+                    await _translationService.CreateAsync(autoTrans);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Lỗi tự động dịch sang {targetLang}: {ex.Message}");
+                }
+            }
+
+            // Xong xuôi thì load lại trang danh sách
             return RedirectToAction("Translation", new { id = t.POIID });
         }
 

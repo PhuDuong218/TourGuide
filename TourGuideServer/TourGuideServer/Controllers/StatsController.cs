@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using TourGuideServer.Data;
+using TourGuideServer.Models;
 
 namespace TourGuideServer.Controllers
 {
@@ -20,57 +21,49 @@ namespace TourGuideServer.Controllers
         {
             var today = DateTime.Today;
 
-            // 1. Thống kê tổng quan
+            // 1. Thống kê tổng quan (Giữ nguyên như cũ của bạn)
             var totalLanguages = await _context.Languages.CountAsync();
+            var totalPOI = await _context.POIs.CountAsync();
             var totalQR = await _context.QRCodes.CountAsync();
-            var totalQRScans = await _context.VisitHistories.CountAsync(v => v.ScanMethod == "QR_Scan");
-            var totalAppUsage = await _context.VisitHistories.CountAsync();
+            var totalListens = await _context.POIs.SumAsync(p => p.ListenCount);
+
             var activeToday = await _context.VisitHistories
                 .Where(v => v.VisitTime >= today)
                 .Select(v => v.UserID)
                 .Distinct()
                 .CountAsync();
 
-            // 2. Thống kê biểu đồ xu hướng 7 ngày
-            var trendLabels = new List<string>();
-            var installTrend = new List<int>();
-            var activeTrend = new List<int>();
-            var scanTrend = new List<int>();
+            // ==========================================
+            // 2. Thống kê Top 5 POI mặc định lúc load trang (ĐÃ ĐỔI THÀNH TẤT CẢ THỜI GIAN)
+            // ==========================================
+            var topPoisAllTime = await _context.POIs
+                .OrderByDescending(p => p.ListenCount)
+                .Take(5)
+                .ToListAsync();
 
-            var startDate = today.AddDays(-6);
-            for (int i = 0; i <= 6; i++)
+            var chartLabels = new List<string>();
+            var chartValues = new List<int>();
+
+            foreach (var poi in topPoisAllTime)
             {
-                var currentDate = startDate.AddDays(i);
-                var nextDate = currentDate.AddDays(1);
-
-                trendLabels.Add(currentDate.ToString("dd/MM"));
-
-                installTrend.Add(await _context.Users.CountAsync(u => u.Role == "user" && u.CreatedAt >= currentDate && u.CreatedAt < nextDate));
-                activeTrend.Add(await _context.VisitHistories.CountAsync(v => v.VisitTime >= currentDate && v.VisitTime < nextDate));
-                scanTrend.Add(await _context.VisitHistories.CountAsync(v => v.ScanMethod == "QR_Scan" && v.VisitTime >= currentDate && v.VisitTime < nextDate));
+                chartLabels.Add(poi.RestaurantName ?? "Chưa đặt tên");
+                chartValues.Add(poi.ListenCount);
             }
-
-            // 3. Thống kê Top 5 POI
-            var topPois = await _context.POIs.OrderByDescending(p => p.ListenCount).Take(5).ToListAsync();
-            var chartLabels = topPois.Select(p => p.RestaurantName ?? "Chưa đặt tên").ToList();
-            var chartValues = topPois.Select(p => p.ListenCount).ToList();
 
             // Trả về JSON 
             return Ok(new
             {
                 totalLanguages,
+                totalPOI,
                 totalQR,
-                totalQRScans,
-                totalAppUsage,
+                totalListens,
                 activeToday,
-                trendLabels,
-                installTrend,
-                activeTrend,
-                scanTrend,
                 chartLabels,
                 chartValues
             });
         }
+
+        
 
         [HttpGet("active-users")]
         public async Task<IActionResult> GetRealTimeActive()

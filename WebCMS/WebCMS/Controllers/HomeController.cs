@@ -14,15 +14,11 @@ namespace WebCMS.Controllers
             try
             {
                 using var client = new HttpClient();
-
-                // Gửi Request lấy dữ liệu từ Server API
                 var response = await client.GetAsync($"{_apiUrl}/dashboard");
 
                 if (response.IsSuccessStatusCode)
                 {
                     var jsonString = await response.Content.ReadAsStringAsync();
-
-                    // Chuyển JSON thành Object Model
                     var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
                     model = JsonSerializer.Deserialize<DashboardViewModel>(jsonString, options) ?? new DashboardViewModel();
                 }
@@ -35,7 +31,6 @@ namespace WebCMS.Controllers
             return View(model);
         }
 
-        // Đẩy thẳng kết quả API về cho Javascript vẽ số Real-time
         [HttpGet]
         public async Task<IActionResult> GetRealTimeActiveUsers()
         {
@@ -53,6 +48,32 @@ namespace WebCMS.Controllers
             catch { }
 
             return Json(new { count = 0 });
+        }
+
+        // 🔥 HÀM MỚI: Phục vụ bộ lọc chọn thời gian 7, 14, 21, 30 ngày từ AJAX (Javascript)
+        [HttpGet]
+        public async Task<IActionResult> GetTopPois(int days)
+        {
+            try
+            {
+                using var client = new HttpClient();
+
+                // Gọi tới hàm API mới bên Server
+                var response = await client.GetAsync($"{_apiUrl}/top-pois?days={days}");
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var jsonString = await response.Content.ReadAsStringAsync();
+                    // Trả thẳng chuỗi JSON lấy được từ API về cho Javascript để vẽ biểu đồ
+                    return Content(jsonString, "application/json");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Lỗi khi lọc biểu đồ: " + ex.Message);
+            }
+
+            return Json(new { labels = new List<string>(), values = new List<int>() });
         }
     }
 }
